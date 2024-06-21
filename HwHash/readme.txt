@@ -1,5 +1,7 @@
-This script assists in gathering the hardware hash of devices during the Out-of-Box Experience (OOBE) process, which is essential for registering devices with Microsoft Intune's Autopilot service (for MOWI).
+This script assists in gathering the hardware hash of devices during the Out-of-Box Experience (OOBE) process, which is essential for registering devices with Microsoft Intune's Autopilot service.
 
+Script was inspired by Brad Wyatt from the lazy administrator.
+https://www.thelazyadministrator.com/2020/01/27/get-a-new-computers-auto-pilot-hash-without-going-through-the-out-of-box-experience-oobe/
 
 Instructions for Obtaining Hardware Hash:
 
@@ -13,7 +15,7 @@ Wait for completion: Allow the script to run and gather the hardware hash. Once 
 
 Remove the USB drive: Safely remove the USB drive from the device.
 
-Email the CSV file: Locate the CSV file named compHash.csv on the USB drive. Email this file to the administrator responsible for device registration (MOWI?).
+Email the CSV file: Locate the CSV file named compHash.csv on the USB drive. Email this file to the administrator responsible for device registration.
 
 
 For additional assistance with Windows Autopilot deployment, refer to https://learn.microsoft.com/en-us/autopilot/add-devices.

@@ -6,6 +6,8 @@ Firewall and Security: Make sure firewall or security software are configured to
 
 Non-Commercial Use: The Speedtest CLI is intended for personal, non-commercial use only. Exercise caution if considering commercial use (careful).
 
+Makes use of the Speedtest Cli: https://www.speedtest.net/apps/cli
+
 
 
 InstallSpeedTest.ps1
