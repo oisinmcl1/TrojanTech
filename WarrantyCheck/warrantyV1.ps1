@@ -1,10 +1,11 @@
 $serialNumber = "5CG021392W"
+$productNumber = "6XE66ET"
 
 # Check if the HPWarranty module is installed
 if (!(Get-Module -ListAvailable -Name HPWarranty)) {
     try {
         # Install the HPWarranty module
-        Install-Module -Name HPWarranty -Force -Scope CurrentUser
+        Install-Module -Name HPWarranty -Force -Scope CurrentUser -AllowClobber
     } catch {
         Write-Error "Failed to install the HPWarranty module: $_"
         exit
@@ -13,21 +14,15 @@ if (!(Get-Module -ListAvailable -Name HPWarranty)) {
 
 # Import the HPWarranty module
 try {
-    Import-Module HPWarranty
+    Import-Module HPWarranty -ErrorAction Stop
 } catch {
     Write-Error "Failed to import the HPWarranty module: $_"
     exit
 }
 
-# Check if the cmdlet exists
-if (-not (Get-Command -Name Get-HPIncWarrantyEntitlement -Module HPWarranty -ErrorAction SilentlyContinue)) {
-    Write-Error "The Get-HPIncWarrantyEntitlement cmdlet is not available."
-    exit
-}
-
 # Get the warranty information
 try {
-    $warrantyInfo = Get-HPIncWarrantyEntitlement -SerialNumber $serialNumber
+    $warrantyInfo = Get-HPIncWarrantyEntitlement -SerialNumber $serialNumber -ProductNumber $productNumber
 } catch {
     Write-Error "Failed to get warranty information: $_"
     exit
