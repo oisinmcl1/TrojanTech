@@ -6,3 +6,6 @@ https://www.cyberdrain.com/automating-with-powershell-automating-warranty-inform
 
 V1 not working due to SOAP Request Issue
 https://github.com/dotps1/HPWarranty/issues/44
+
+V2 starting using
+https://github.com/KelvinTegelaar/PowerShellWarrantyReports
