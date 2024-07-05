@@ -1,0 +1,4 @@
+# This is just to ignore HTML files for language statistics.
+# Only one HTML file in repository which was used for web scraping.
+
+*.html linguist-detectable=false
