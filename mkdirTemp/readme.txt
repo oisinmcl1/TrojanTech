@@ -2,7 +2,7 @@ On new machines the temp file has to be manually created.
 
 I'm very lazy.
 
-Both powershell script and command file achieve the same thing.
+Both powershell script and batch file achieve the same thing.
 
 They ensure its run with admin privileges.
 
