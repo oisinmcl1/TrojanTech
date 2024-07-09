@@ -1,0 +1,1 @@
+https://github.com/WurstCommander/Win10AppRemove
