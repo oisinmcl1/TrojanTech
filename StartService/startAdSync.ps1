@@ -1,7 +1,7 @@
 # Define the service name
 $serviceName = "ADSync"
 
-# Function to write output with timestamp
+# Write output with timestamp
 function Write-Log {
     param (
         [string]$message
