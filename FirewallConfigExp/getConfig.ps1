@@ -1,21 +1,14 @@
-# Ignore SSL certificate errors
-Add-Type @"
-using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-public static class TrustAllCertsPolicy {
-    public static void Ignore() {
-        ServicePointManager.ServerCertificateValidationCallback = 
-            new RemoteCertificateValidationCallback(
-                delegate { return true; }
-            );
-    }
-}
-"@
-[TrustAllCertsPolicy]::Ignore()
+# Gets default gateway ip (firewall)
+$defaultGateway = (Get-NetIPConfiguration).IPv4DefaultGateway[0].NextHop
 
-# Ensure using all SSL/TLS protocols
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Ssl3
+# Checks that default gateway ends in ".1" (indicates that it is firewall)
+if ($defaultGateway.SubString($defaultGateway.length - 2) -eq ".1") {
+    $firewallIp = $defaultGateway
+}
+# Otherwise prompt the user to enter firewall ip
+else {
+    $firewallIp = Read-Host "Enter firewall IP"
+}
 
 function Get-APIKey {
     param (
@@ -44,7 +37,6 @@ function Export-FirewallConfig {
     Invoke-WebRequest -Uri $uri -OutFile $outputFile
 }
 
-$firewallIp = Read-Host "IP of firewall"
 $password = Read-Host "Password" -AsSecureString
 $outputFile = "C:\PaloAltoConfig\config.xml"
 
