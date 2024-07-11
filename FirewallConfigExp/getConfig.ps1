@@ -24,7 +24,7 @@ $defaultGateway = (Get-NetIPConfiguration).IPv4DefaultGateway[0].NextHop
 Write-Output "Default Gateway: $defaultGateway"
 
 # Check if the default gateway ends in ".1" (indicating it might be the firewall IP)
-if ($defaultGateway.SubString($defaultGateway.Length - 2) -eq ".1") {
+if ($defaultGateway.EndsWith(".1")) {
     $firewallIp = $defaultGateway
 } else {
     # Prompt the user to enter the firewall IP if the default gateway does not end in ".1"
@@ -34,6 +34,13 @@ if ($defaultGateway.SubString($defaultGateway.Length - 2) -eq ".1") {
 # Debug output to confirm firewall IP selection
 Write-Output "Using Firewall IP: $firewallIp"
 
+function ConvertFrom-SecureStringToPlainText {
+    param (
+        [System.Security.SecureString]$secureString
+    )
+    return [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureString))
+}
+
 function Get-APIKey {
     param (
         [string]$firewallIp,
@@ -42,14 +49,17 @@ function Get-APIKey {
     $username = "admin"
 
     # Convert SecureString to plain text for the API request
-    $passwordPlainText = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+    $passwordPlainText = ConvertFrom-SecureStringToPlainText -secureString $password
 
     # Debug output to confirm API request URL
     $uri = "https://$firewallIp/api/?type=keygen&user=$username&password=$passwordPlainText"
     Write-Output "Requesting API Key with URL: $uri"
-    $response = Invoke-RestMethod -Uri $uri -Method Post
+    $response = Invoke-RestMethod -Uri $uri -Method Post -ErrorAction Stop
 
     # Return the API key from the response
+    if ($response.response.status -ne "success") {
+        throw "API Key retrieval failed. Response: $($response | ConvertTo-Json -Compress)"
+    }
     return $response.response.result.key
 }
 
@@ -65,7 +75,7 @@ function Export-FirewallConfig {
     
     # Debug output to confirm export URL
     Write-Output "Exporting config with URL: $uri"
-    Invoke-WebRequest -Uri $uri -OutFile $outputFile
+    Invoke-WebRequest -Uri $uri -OutFile $outputFile -ErrorAction Stop
 }
 
 $password = Read-Host "Password" -AsSecureString
@@ -78,13 +88,15 @@ try {
 } catch {
     # Catch and display errors if the API key retrieval fails
     Write-Error "Failed to retrieve API Key: $_"
+    exit 1
 }
 
 try {
     # Try to export the firewall configuration using the API key
     Export-FirewallConfig -firewallIp $firewallIp -apiKey $apiKey -outputFile $outputFile
-    Write-Output "Configuration exported successfully."
+    Write-Output "Configuration exported successfully to $outputFile."
 } catch {
     # Catch and display errors if the configuration export fails
     Write-Error "Failed to export configuration: $_"
+    exit 1
 }
