@@ -97,6 +97,12 @@ function Export-FirewallConfig {
     }
 }
 
+# Check if the directory exists
+if (-not (Test-Path -Path "C:\PaloAltoConfig\")) {
+    # If the directory does not exist, create it
+    New-Item -ItemType directory -Path "C:\PaloAltoConfig\"
+}
+
 $password = Read-Host "Password" -AsSecureString
 $outputFile = "C:\PaloAltoConfig\config.xml"
 
