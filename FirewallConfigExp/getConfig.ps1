@@ -42,16 +42,34 @@ function Get-APIKey {
     # Convert SecureString to plain text for the API request
     $passwordPlainText = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
 
-    # Debug output to confirm API request URL
-    $uri = "https://$firewallIp/api/?type=keygen&user=$username&password=$passwordPlainText"
-    Write-Output "Requesting API Key with URL: $uri"
-    $response = Invoke-RestMethod -Uri $uri -Method Post
+    # URL encode the password to handle special characters
+    $encodedPassword = [System.Net.WebUtility]::UrlEncode($passwordPlainText)
 
-    # Debug output to display API key retrieved
-    Write-Output "API Key retrieved: $($response.response.result.key)"
+    # Define the parameters for API key generation
+    $uri = "https://$firewallIp/api/?type=keygen"
+    $contentType = "application/x-www-form-urlencoded"
+    $body = "user=$username&password=$encodedPassword"
 
-    # Return the API key from the response
-    return $response.response.result.key
+    # Send the POST request to generate API key
+    try {
+        $response = Invoke-WebRequest -Uri $uri -Method Post -ContentType $contentType -Body $body
+
+        # Parse the response to extract the API key
+        $responseXml = [xml]$response.Content
+        $apiKey = $responseXml.response.result.key
+
+        # Verify if the API key was retrieved successfully
+        if ($apiKey) {
+            Write-Output "API Key successfully retrieved: $apiKey"
+            return $apiKey
+        } else {
+            Write-Error "Failed to retrieve API Key"
+            exit
+        }
+    } catch {
+        Write-Error "Error retrieving API Key: $_"
+        exit
+    }
 }
 
 function Export-FirewallConfig {
