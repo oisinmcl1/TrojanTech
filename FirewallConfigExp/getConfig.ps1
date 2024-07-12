@@ -1,39 +1,17 @@
-# I'm getting an error when I Invoke-RestMethod to get the API Key, this first part attempts to bypass it.
-# Thank you Jamiker from stackoverflow
+# Disable SSL certificates
+Add-Type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
 
-# Check if ServerCertificateValidationCallback type already exists before adding
-if (-not ([System.Management.Automation.PSTypeName]'ServerCertificateValidationCallback').Type) {
-    $certCallback = @"
-        using System;
-        using System.Net;
-        using System.Net.Security;
-        using System.Security.Cryptography.X509Certificates;
-        
-        public class ServerCertificateValidationCallback
-        {
-            public static void Ignore()
-            {
-                if (ServicePointManager.ServerCertificateValidationCallback == null)
-                {
-                    ServicePointManager.ServerCertificateValidationCallback += 
-                        delegate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-                        {
-                            return true;
-                        };
-                }
-            }
-        }
-"@
-    Add-Type $certCallback
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+        return true;
+    }
 }
-
-# Set all necessary SSL/TLS protocols
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor `
-                                                     [System.Net.SecurityProtocolType]::Tls11 -bor `
-                                                     [System.Net.SecurityProtocolType]::Tls
-
-# Ignore SSL certificate errors
-[ServerCertificateValidationCallback]::Ignore()
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
 
 
