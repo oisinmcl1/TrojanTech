@@ -14,8 +14,6 @@ if (-not ([System.Management.Automation.PSTypeName]'TrustAllCertsPolicy').Type) 
 }
 [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
-
-
 # Get the default gateway IP address (firewall)
 $defaultGateway = (Get-NetIPConfiguration).IPv4DefaultGateway[0].NextHop
 
@@ -94,14 +92,38 @@ function Export-FirewallConfig {
 
 
 # Check if the directory exists
+<#
 if (-not (Test-Path -Path "C:\PaloAltoConfig\")) {
     # If the directory does not exist, create it
     New-Item -ItemType directory -Path "C:\PaloAltoConfig\"
 }
+#>
 
 $password = Read-Host "Password" -AsSecureString
 
-$outputFile = "C:\PaloAltoConfig\config.xml"
+## $outputFile = "C:\PaloAltoConfig\config.xml"
+
+$outputDir = Read-Host "Output Directory"
+
+if (-not (Test-Path -Path $outputDir)) {
+    # If the directory does not exist, create it
+    try {
+        New-Item -ItemType directory -Path $outputDir
+        Write-Output "Directory created: $outputDir"
+    } catch {
+        Write-Error "Failed to create directory: $_"
+        exit
+    }
+}
+
+# Get the current date and format it as yyyyMMdd
+$date = Get-Date -Format "yyyyMMdd"
+
+# date_client_config.xml
+# change to parameters
+
+# Create the output file path with the date prefix
+$outputFile = Join-Path -Path $outputDir -ChildPath "${date}_config.xml"
 
 try {
     # Try to retrieve the API key using the firewall IP and password
