@@ -1,31 +1,45 @@
 param(
     [string]$ip,
     [string]$username
+    ## [string]$password
 )
 
+# Function to check if module is installed and import it
+function ModuleInstall {
+    param(
+        [string]$moduleName
+    )
 
+    # Update NuGet to install needed modules
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 
-# THIS SECTION ENABLES RESTFUL API THROUGH SSH
-
-# Check if SSH module is installed
-if(!(Get-Module -ListAvailable -Name Posh-SSH)) {
-    try {
-        Install-Module -Name Posh-SSH -Repository PSGallery -Force
+    # Install module if not installed already
+    if(!(Get-Module -ListAvailable -Name $moduleName)) {
+        try {
+            Install-Module -Name $moduleName -Repository PSGallery -Force
+        }
+        catch {
+            Write-Error "Failed to install $moduleName :`n $_"
+            exit
+        }
+    }
+    
+    # Import module
+    try{
+        Import-Module $moduleName -ErrorAction Stop
     }
     catch {
-        Write-Error "Failed to install Posh-SSH $_"
+        Write-Error "Failed to Import $moduleName :`n $_"
         exit
-    }
+    }    
 }
 
-# Import SSH module
-try{
-    Import-Module Posh-SSH -ErrorAction Stop
-}
-catch {
-    Write-Error "Failed to Import Posh-SSH $_"
-    exit
-}
+## ModuleInstall -moduleName "Posh-SSH"
+ModuleInstall -moduleName "PSWriteHTML"
+
+<#
+
+# THIS SECTION ENABLES RESTFUL API THROUGH SSH
 
 # Establish Connection to FortiVoice System
 $sshSesh = New-SSHSession -ComputerName $ip -Credential (Get-Credential)
@@ -37,3 +51,5 @@ Invoke-SSHCommand -SSHSession $sshSesh -Command "end"
 
 # Close SSH
 Remove-SSHSession -SSHSession $sshSesh
+
+#>
