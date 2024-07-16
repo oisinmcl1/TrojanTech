@@ -133,9 +133,3 @@ catch {
     # Catch and display errors if the configuration export fails
     Write-Error "Failed to export configuration: $_"
 }
-
-<#
-
-.\getConfig.ps1 -username "admin" -encodedPassword "base64EncodedPassword" -outputDir "C:\temp"
-
-#>
