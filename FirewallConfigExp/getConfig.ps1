@@ -116,14 +116,15 @@ if (-not (Test-Path -Path $outputDir)) {
     }
 }
 
+# Get device name and substring of clients name
+$device = (Get-ComputerInfo).CsName
+$device = $device.SubString(4, 3)
+
 # Get the current date and format it as yyyyMMdd
 $date = Get-Date -Format "yyyyMMdd"
 
-# date_client_config.xml
-# change to parameters
-
 # Create the output file path with the date prefix
-$outputFile = Join-Path -Path $outputDir -ChildPath "${date}_config.xml"
+$outputFile = Join-Path -Path $outputDir -ChildPath "${date}_${device}_config.xml"
 
 try {
     # Try to retrieve the API key using the firewall IP and password
