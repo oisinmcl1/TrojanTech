@@ -15,6 +15,11 @@ Once authenticated, exports the firewall configuration in XML format.
 Saves the configuration file to a specified directory.
 
 
+Export-Version
+Using the exported config.xml file, this function grabs the version.
+Outputted as txt file.
+
+
 Password Handling
 
 Security: The script ensures secure handling of passwords by using PowerShell's SecureString type for sensitive information.

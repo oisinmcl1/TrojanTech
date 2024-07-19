@@ -92,6 +92,32 @@ function Export-FirewallConfig {
     }
 }
 
+function Extract-Version {
+    param(
+        [string]$configFile,
+        [string]$outputDir
+    )
+
+    try {
+        # Load XML from exported config
+        [xml]$configXML = Get-Content -Path $configFile
+
+        # Extract version
+        $version = $configXML.config.version
+
+        # Define the output file path
+        $outputFilePath = Join-Path -Path $outputDir -ChildPath "firewall_version.txt"
+
+        # Write version to console and text file
+        Write-Output "Firewall Version: $version"
+        Set-Content -Path $outputFilePath -Value $version
+        Write-Output "Version information written to: $outputFilePath"
+    }
+    catch {
+        Write-Error "Failed to extract firewall version from config file: $_"
+    }
+}
+
 # Ensure the output directory exists
 if (-not (Test-Path -Path $outputDir)) {
     # If the directory does not exist, create it
@@ -132,4 +158,13 @@ try {
 catch {
     # Catch and display errors if the configuration export fails
     Write-Error "Failed to export configuration: $_"
+}
+
+try {
+    # Extract version of firewall from config
+    Extract-Version -configFile $outputFile -outputDir $outputDir
+} 
+catch {
+    # Catch and display errors if the configuration export fails
+    Write-Error "Failed to export version file: $_"
 }
