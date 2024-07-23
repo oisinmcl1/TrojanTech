@@ -41,10 +41,6 @@ function ModuleInstall {
     }    
 }
 
-## ModuleInstall -moduleName "Posh-SSH"
-ModuleInstall -moduleName "PSWriteHTML"
-ModuleInstall -moduleName "Invoke-RestMethod"
-
 
 # Function to enable rest API through SSH
 function Enable-RestAPI {
@@ -67,25 +63,43 @@ function Enable-RestAPI {
     Remove-SSHSession -SSHSession $sshSesh
 }
 
-# THIS SECTION AUTHENTICATES FOR FORTIVOICE API AND RETRIEVES APSSCOOKIE
 
+# Function to authenticate for FortiVoice API and retrieve APSSCOOKIE
 function Get-FortiCookie {
     param(
-    [string]$ip,
-    [string]$username,
-    [string]$password
+        [string]$ip,
+        [string]$username,
+        [string]$password
     )
 
     $url = "https://$ip/api/v1/VoiceAdminLogin"
+    $jsonBody = "{`"username`":`"$username`",`"password`":`"$password`"}"
+
+    $headers = @{
+        "Content-Type" = "application/json"
+    }
+
+    $response = Invoke-RestMethod -Uri $url -Method Post -Body $jsonBody -Headers $headers -SkipCertificateCheck
+
+    if ($response.error -eq $null) {
+        return $response.APSCOOKIE
+    } else {
+        Write-Error "Failed to retrieve APSCOOKIE: $($response.error)"
+        exit
+    }
 }
 
 
-
+<#
 # Enable Rest API
 try {
+    ModuleInstall -moduleName "Posh-SSH" 
     Write-Output "Enabling Rest-API`n"
     Enable-RestAPI -ip $ip -username $username -password $password
 }
 catch {
     Write-Error "Failed to enable Rest API: `n $_"
 }
+#>
+
+## ModuleInstall -moduleName "PSWriteHTML"
