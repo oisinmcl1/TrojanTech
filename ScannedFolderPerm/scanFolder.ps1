@@ -9,7 +9,8 @@ $acl = Get-Acl $folderPath
 $rights = [System.Security.AccessControl.FileSystemRights]::ReadAndExecute -bor 
           [System.Security.AccessControl.FileSystemRights]::ListDirectory -bor
           [System.Security.AccessControl.FileSystemRights]::Read -bor
-          [System.Security.AccessControl.FileSystemRights]::Write
+          [System.Security.AccessControl.FileSystemRights]::Write -bor
+          [System.Security.AccessControl.FileSystemRights]::Modify
 
 # Create a new access rule for the specified user
 $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($userName, $rights, "ContainerInherit, ObjectInherit", "None", "Allow")
