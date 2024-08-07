@@ -1,9 +1,15 @@
-$logfile = "pinglog.txt"
-$deviceIP = Read-Host "Device IP"
+param(
+    [string]$ip,
+    [string]$interval
+)
 
+$logfile = "pinglog.txt"
+$dir = Get-Location
+
+Write-Output "=======================================`nStarting Ping Monitor for:`n$ip`n`nLog file location:`n$dir`n`nInterval:`n$interval seconds`n`nPress Control-C to stop.`n======================================="
 while ($true) {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $ping = Test-Connection -ComputerName $devicerIP -Count 1 -ErrorAction SilentlyContinue
+    $ping = Test-Connection -ComputerName $ip -Count 1 -ErrorAction SilentlyContinue
     
     if ($ping) {
         $status = "Online"
@@ -12,5 +18,5 @@ while ($true) {
     }
 
     "$timestamp - $status" | Out-File -FilePath $logfile -Append
-    Start-Sleep -Seconds 10
+    Start-Sleep -Seconds $interval
 }
