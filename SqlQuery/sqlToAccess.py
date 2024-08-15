@@ -3,7 +3,7 @@ import pyodbc
 
 """
 CONNECT TO SQL SERVER
-FETCH DBO_HEADING, DBO_HEADING2 AND DBO_HEADINGEVONET
+FETCH DBO.HEADING, DBO.HEADING2 AND DBO.HEADINGEVONET
 """
 
 dsn = "Orders"
@@ -17,17 +17,50 @@ try:
 
     print(f"Connection to SQL Server: {dsn} and Database: {database} was successful!")
 
-    # Fetch Query from SQL Server
-    fetchQuery = ""
+    # Fetch rows from dbo_Heading where SatelliteJobNumber = 'RB262'
+    fetchQuery_Heading = """
+    SELECT AccountNo, AcknowledgementStatus, AmountPaid, AmountPaid_Converted, Architect, Archive,
+           ArchivedCopyKeyID, ArchiveZip, BatchIndexOrder, BatchKeyID, BMGlassJob, BrickCavity,
+           BuyUnglazedFrameGlass, BuyUnglazedFromSupplier, BuyPanelsFrom3rdParty, ChangeDate, ChangeTime,
+           CheckedOutTo, CheckOrderCreated, Completed, Contact, Cost, CostLibrary, CounterUniqueKeyID,
+           CreatedFrom, CustomerID, CustomerType, CustomerUseMarkupPerColour, CustomerUsePrimeAperture,
+           CustomerMidrailHeight, CustomerTransomDrop, DateAmended, DateCompleted, DateConfirmed, DateCreated,
+           DateDelivery, DateFitted, DateGlassDelivery, DateInProduction, DateOnwardDelivery, DateInvoice,
+           DateLoaded, DateOrder, DatePaid, DatePaidSeveral, DatePanelDelivery, DateRoofDelivery, DateSawFileCreated,
+           DateSurvey, DateToughGlassDelivery, DatePreOrderConverted, DatePreQuoteConverted, Despatched,
+           Dessian_CurrencyConversion, Email, EmailLong, FaxNo, FensaNumber, FileName, Fitting, FittingAdvancedID,
+           FittingTeam, FittingTeamID, GlassAccountNo, GlassBatched, GlassSupplierID, Glazed, Hidden, HousetypeCategoryID,
+           Initials, InputBy, InputByID, InvoiceAddress1, InvoiceAddress2, InvoiceAddress3, InvoiceAddress4,
+           InvoiceCounty, InvoiceNumber, InvoicePostCode, InvoicePrinted, InvoiceSettled, InvoiceSettledInformation,
+           JobKeyID, JobNumber, JobType, MainColour, MasterJobKeyID, Mobile, Name, NettDeliveryCharge,
+           NettDeliveryCharge_Converted, Notes, PanelSupplierID, PaymentMethod, PaymentMethodID, PhoneNo, Posted,
+           PreOrderPrinted, PreQuotePrinted, PriceGrids, Projectname, QuantityFabricationUnits,
+           QuantityFabricationUnits_Fabrication, QuantityFrames, QuantityGlass, QuantityGlassAnnealed,
+           QuantityGlassLaminated, QuantityGlassObscure, QuantityGlassToughened, QuantityPanels, QuantityPanelsFlat,
+           QuantityPanelsMoulded, QuantityRoofs, QuantityRoofPacks, QuantityUnglazed, QuoteNumber, QuotePrinted,
+           ReceivedOrder, Reference, RouteKeyID, Salesman, SalesmanCommission, SalesmanID, Salutation,
+           SatelliteCustomerID, SatelliteJobKeyID, SatelliteJobNumber, SatelliteName, SatelliteUploadedDate,
+           SellingPriceExTax, SellingPriceExTax_Converted, SellingPriceIncTax, SellingPriceIncTax_Converted, TaxAmount,
+           TaxAmount_Converted, TaxCode, TaxRate, Toughened, VersionCreated, VersionAmended
+    FROM dbo.Heading
+    WHERE SatelliteJobNumber = 'RB262';
+    """
 
-    # Execute fetch query
-    ## sqlCursor.execute(fetchQuery)
-    ## rows = sqlCursor.fetchall()
+    sqlCursor.execute(fetchQuery_Heading)
+    row = sqlCursor.fetchone()
+
+    # Verify fetched data
+    if row:
+        print("Fetched data:")
+        print(row)
+    else:
+        print("No data found for SatelliteJobNumber = 'RB262'.")
 
 # If error, print message and ensure rows is none
 except pyodbc.Error as ex:
     print(f"SQL Server connection or query failed: {ex}")
     rows = None
+
 
 # Close connection
 finally:
