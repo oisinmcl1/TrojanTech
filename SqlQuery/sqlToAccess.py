@@ -1,4 +1,6 @@
 import pyodbc
+import datetime
+import decimal
 
 def fetch_data_from_sql():
     """
@@ -45,6 +47,16 @@ def fetch_data_from_sql():
 
         if row:
             print(f"Fetched {len(row)} columns from the SQL Server database.")
+            # Clean up the data
+            row = tuple(
+                None if value is None or (isinstance(value, str) and not value.strip()) else 
+                None if isinstance(value, datetime.datetime) and value == datetime.datetime(1899, 12, 30) else 
+                str(value) if isinstance(value, datetime.datetime) else 
+                float(value) if isinstance(value, decimal.Decimal) else 
+                1 if value is True else 0 if value is False else 
+                value 
+                for value in row
+            )
             return row
         else:
             print("No data found for SatelliteJobNumber = 'RB262'.")
@@ -130,8 +142,22 @@ def update_access_database(row):
                     for count, query in chunks:
                         print(f"Executing chunk with {count} placeholders.")
                         params = row[:count]
+                        
+                        # Convert boolean and datetime to appropriate types
+                        params = tuple(
+                            1 if p is True else 0 if p is False else
+                            None if isinstance(p, str) and p == '' else  # Convert empty strings to None
+                            None if isinstance(p, datetime.datetime) and p == datetime.datetime(1899, 12, 30) else  # Handle placeholder date
+                            str(p) if isinstance(p, datetime.datetime) else  # Convert datetime to string if not placeholder
+                            float(p) if isinstance(p, decimal.Decimal) else  # Convert decimal to float
+                            p for p in params
+                        )
+                        
+                        # Debug: Print each parameter type and value
+                        for i, p in enumerate(params):
+                            print(f"Parameter {i+1}: Value = {p}, Type = {type(p)}")
+                        
                         print(f"SQL Query: {query}")
-                        print(f"Parameters: {params}")
                         print(f"Number of parameters: {len(params)}")
 
                         try:
@@ -158,7 +184,6 @@ def update_access_database(row):
         except NameError:
             pass
         print("Access Connection Closed.")
-
 
 # Run the script
 row_data = fetch_data_from_sql()
