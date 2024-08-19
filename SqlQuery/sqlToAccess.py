@@ -2,10 +2,30 @@ import pyodbc
 import datetime
 import decimal
 
+def clean_data(value, expected_type=None):
+    if isinstance(value, str):
+        value = value.strip()
+        if value == '00:00:00':
+            return None
+        if value == '':
+            return None
+        if expected_type == 'int':
+            return int(value) if value.isdigit() else None
+        return value
+    elif isinstance(value, datetime.datetime):
+        if value == datetime.datetime(1899, 12, 30) or value.time() == datetime.time(0, 0):
+            return None
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    elif isinstance(value, decimal.Decimal):
+        return float(value)
+    elif isinstance(value, bool):
+        return 1 if value else 0
+    elif expected_type == 'int':
+        return int(value) if value is not None else None
+    else:
+        return value
+
 def fetch_data_from_sql():
-    """
-    Connect to the SQL Server and fetch the row data from dbo.Heading.
-    """
     dsn = "Orders"
     database = "FFOrders"
     try:
@@ -19,27 +39,25 @@ def fetch_data_from_sql():
                ArchivedCopyKeyID, ArchiveZip, BatchIndexOrder, BatchKeyID, BMGlassJob, BrickCavity,
                BuyUnglazedFrameGlass, BuyUnglazedFromSupplier, BuyPanelsFrom3rdParty, ChangeDate, ChangeTime,
                CheckedOutTo, CheckOrderCreated, Completed, Contact, Cost, CostLibrary, CounterUniqueKeyID,
-               CreatedFrom, CustomerID, CustomerType, CustomerUseMarkupPerColour, CustomerUsePrimeAperture,
+               CreatedFrom, CreditAmount, CreditLimit, CreditNote, CreditNoteNumber, CurrencyCharacter, 
+               CurrencyConversion, CustomerID, CustomerType, CustomerUseMarkupPerColour, CustomerUsePrimeAperture,
                CustomerMidrailHeight, CustomerTransomDrop, DateAmended, DateCompleted, DateConfirmed, DateCreated,
                DateDelivery, DateFitted, DateGlassDelivery, DateInProduction, DateOnwardDelivery, DateInvoice,
                DateLoaded, DateOrder, DatePaid, DatePaidSeveral, DatePanelDelivery, DateRoofDelivery, DateSawFileCreated,
-               DateSurvey, DateToughGlassDelivery, DatePreOrderConverted, DatePreQuoteConverted, Despatched,
-               Dessian_CurrencyConversion, Email, EmailLong, FaxNo, FensaNumber, FileName, Fitting, FittingAdvancedID,
-               FittingTeam, FittingTeamID, GlassAccountNo, GlassBatched, GlassSupplierID, Glazed, Hidden, HousetypeCategoryID,
-               Initials, InputBy, InputByID, InvoiceAddress1, InvoiceAddress2, InvoiceAddress3, InvoiceAddress4,
-               InvoiceCounty, InvoiceNumber, InvoicePostCode, InvoicePrinted, InvoiceSettled, InvoiceSettledInformation,
-               JobKeyID, JobNumber, JobType, MainColour, MasterJobKeyID, Mobile, Name, NettDeliveryCharge,
-               NettDeliveryCharge_Converted, Notes, PanelSupplierID, PaymentMethod, PaymentMethodID, PhoneNo, Posted,
-               PreOrderPrinted, PreQuotePrinted, PriceGrids, Projectname, QuantityFabricationUnits,
-               QuantityFabricationUnits_Fabrication, QuantityFrames, QuantityGlass, QuantityGlassAnnealed,
-               QuantityGlassLaminated, QuantityGlassObscure, QuantityGlassToughened, QuantityPanels, QuantityPanelsFlat,
-               QuantityPanelsMoulded, QuantityRoofs, QuantityRoofPacks, QuantityUnglazed, QuoteNumber, QuotePrinted,
-               ReceivedOrder, Reference, RouteKeyID, Salesman, SalesmanCommission, SalesmanID, Salutation,
-               SatelliteCustomerID, SatelliteJobKeyID, SatelliteJobNumber, SatelliteName, SatelliteUploadedDate,
-               SellingPriceExTax, SellingPriceExTax_Converted, SellingPriceIncTax, SellingPriceIncTax_Converted, TaxAmount,
-               TaxAmount_Converted, TaxCode, TaxRate, Toughened, VersionCreated, VersionAmended
+               DateSurvey, DateToughGlassDelivery, DatePreOrderConverted, DatePreQuoteConverted, DeliveryAddress1,
+               DeliveryAddress2, DeliveryAddress3, DeliveryAddress4, DeliveryCounty, DeliveryPostCode, DeliveryStatusID,
+               DeliveryTeam, DeliveryTeamID, DepartmentID, DepositPaid, DepositPaid_Converted, Despatched, 
+               Dessian_CurrencyConversion, DiscountFrame, DiscountFrame2, DiscountFrame3, DiscountFrame4, DiscountFrame5, 
+               DiscountFrame6, DiscountFrame7, DiscountFrame8, DiscountFrame9, DiscountFrame10, Discount3rdPartyGlass, 
+               Discount3rdPartyPanel, DiscountPartExtra, DiscountSATExtra, DiscountSATExtra2, DiscountSATExtra3, 
+               DiscountSATExtra4, DiscountSATExtra5, DiscountSATExtra6, DiscountSATExtra7, DiscountSATExtra8, 
+               DiscountSATExtra9, DiscountSATExtra10, Email, EmailLong, FaxNo, FensaNumber, FileName, Fitting, 
+               FittingAdvancedID, FittingTeam, FittingTeamID, GlassAccountNo, GlassBatched, GlassSupplierID, Glazed, 
+               Hidden, HousetypeCategoryID, Initials, InputBy, InputByID, InvoiceAddress1, InvoiceAddress2, 
+               InvoiceAddress3, InvoiceAddress4, InvoiceCounty, InvoiceNumber, InvoicePostCode, InvoicePrinted, 
+               InvoiceSettled, InvoiceSettledInformation, JobKeyID, JobType, MainColour
         FROM dbo.Heading
-        WHERE SatelliteJobNumber = 'RB262';
+        WHERE JobNumber = 'RB267';
         """
 
         sqlCursor.execute(fetchQuery_Heading)
@@ -47,19 +65,10 @@ def fetch_data_from_sql():
 
         if row:
             print(f"Fetched {len(row)} columns from the SQL Server database.")
-            # Clean up the data
-            row = tuple(
-                None if value is None or (isinstance(value, str) and not value.strip()) else 
-                None if isinstance(value, datetime.datetime) and value == datetime.datetime(1899, 12, 30) else 
-                str(value) if isinstance(value, datetime.datetime) else 
-                float(value) if isinstance(value, decimal.Decimal) else 
-                1 if value is True else 0 if value is False else 
-                value 
-                for value in row
-            )
+            row = tuple(clean_data(value) for value in row)
             return row
         else:
-            print("No data found for SatelliteJobNumber = 'RB262'.")
+            print("No data found for JobNumber = 'RB267'.")
             return None
 
     except pyodbc.Error as ex:
@@ -72,9 +81,6 @@ def fetch_data_from_sql():
         print("SQL Connection Closed.")
 
 def update_access_database(row):
-    """
-    Connect to the Access Database and update the Heading table.
-    """
     mdb = r"E:\BM\FuturaFrames\Orders\2024\Jun\Test\RB262.mdb"
 
     try:
@@ -96,46 +102,49 @@ def update_access_database(row):
                             BatchIndexOrder = ?, BatchKeyID = ?, BMGlassJob = ?, BrickCavity = ?, BuyUnglazedFrameGlass = ?,
                             BuyUnglazedFromSupplier = ?, BuyPanelsFrom3rdParty = ?, ChangeDate = ?, ChangeTime = ?, CheckedOutTo = ?,
                             CheckOrderCreated = ?, Completed = ?, Contact = ?, Cost = ?, CostLibrary = ?, CounterUniqueKeyID = ?
-                        WHERE JobNumber = 'RB262';
+                        WHERE JobNumber = 'RB267';
                         """),
                         (24, """
                         UPDATE Heading
-                        SET CreatedFrom = ?, CustomerID = ?, CustomerType = ?, CustomerUseMarkupPerColour = ?,
-                            CustomerUsePrimeAperture = ?, CustomerMidrailHeight = ?, CustomerTransomDrop = ?, DateAmended = ?,
-                            DateCompleted = ?, DateConfirmed = ?, DateCreated = ?, DateDelivery = ?, DateFitted = ?, DateGlassDelivery = ?,
-                            DateInProduction = ?, DateOnwardDelivery = ?, DateInvoice = ?, DateLoaded = ?, DateOrder = ?, DatePaid = ?,
-                            DatePaidSeveral = ?, DatePanelDelivery = ?, DateRoofDelivery = ?, DateSawFileCreated = ?
-                        WHERE JobNumber = 'RB262';
-                        """),
-                        (23, """
-                        UPDATE Heading
-                        SET DateToughGlassDelivery = ?, DatePreOrderConverted = ?, DatePreQuoteConverted = ?, Despatched = ?,
-                            Dessian_CurrencyConversion = ?, Email = ?, EmailLong = ?, FaxNo = ?, FensaNumber = ?, FileName = ?, Fitting = ?,
-                            FittingAdvancedID = ?, FittingTeam = ?, FittingTeamID = ?, GlassAccountNo = ?, GlassBatched = ?,
-                            GlassSupplierID = ?, Glazed = ?, Hidden = ?, HousetypeCategoryID = ?, Initials = ?, InputBy = ?, InputByID = ?
-                        WHERE JobNumber = 'RB262';
+                        SET CreatedFrom = ?, CreditAmount = ?, CreditLimit = ?, CreditNote = ?,
+                            CreditNoteNumber = ?, CurrencyCharacter = ?, CurrencyConversion = ?, CustomerID = ?,
+                            CustomerType = ?, CustomerUseMarkupPerColour = ?, CustomerUsePrimeAperture = ?, CustomerMidrailHeight = ?,
+                            CustomerTransomDrop = ?, DateAmended = ?, DateCompleted = ?, DateConfirmed = ?,
+                            DateCreated = ?, DateDelivery = ?, DateFitted = ?, DateGlassDelivery = ?,
+                            DateInProduction = ?, DateOnwardDelivery = ?, DateInvoice = ?, DateLoaded = ?
+                        WHERE JobNumber = 'RB267';
                         """),
                         (24, """
                         UPDATE Heading
-                        SET InvoiceAddress1 = ?, InvoiceAddress2 = ?, InvoiceAddress3 = ?, InvoiceAddress4 = ?, InvoiceCounty = ?,
-                            InvoiceNumber = ?, InvoicePostCode = ?, InvoicePrinted = ?, InvoiceSettled = ?, InvoiceSettledInformation = ?,
-                            JobKeyID = ?, JobNumber = ?, JobType = ?, MainColour = ?, MasterJobKeyID = ?, Mobile = ?, Name = ?,
-                            NettDeliveryCharge = ?, NettDeliveryCharge_Converted = ?, Notes = ?, PanelSupplierID = ?, PaymentMethod = ?,
-                            PaymentMethodID = ?, PhoneNo = ?, Posted = ?, PreOrderPrinted = ?, PreQuotePrinted = ?, PriceGrids = ?,
-                            Projectname = ?, QuantityFabricationUnits = ?, QuantityFabricationUnits_Fabrication = ?, QuantityFrames = ?
-                        WHERE JobNumber = 'RB262';
+                        SET DateOrder = ?, DatePaid = ?, DatePaidSeveral = ?, DatePanelDelivery = ?,
+                            DateRoofDelivery = ?, DateSawFileCreated = ?, DateSurvey = ?, DateToughGlassDelivery = ?,
+                            DatePreOrderConverted = ?, DatePreQuoteConverted = ?, DeliveryAddress1 = ?, DeliveryAddress2 = ?,
+                            DeliveryAddress3 = ?, DeliveryAddress4 = ?, DeliveryCounty = ?, DeliveryPostCode = ?,
+                            DeliveryStatusID = ?, DeliveryTeam = ?, DeliveryTeamID = ?, DepartmentID = ?,
+                            DepositPaid = ?, DepositPaid_Converted = ?, Despatched = ?, Dessian_CurrencyConversion = ?
+                        WHERE JobNumber = 'RB267';
                         """),
-                        (25, """
+                        (24, """
                         UPDATE Heading
-                        SET QuantityGlass = ?, QuantityGlassAnnealed = ?, QuantityGlassLaminated = ?, QuantityGlassObscure = ?,
-                            QuantityGlassToughened = ?, QuantityPanels = ?, QuantityPanelsFlat = ?, QuantityPanelsMoulded = ?,
-                            QuantityRoofs = ?, QuantityRoofPacks = ?, QuantityUnglazed = ?, QuoteNumber = ?, QuotePrinted = ?,
-                            ReceivedOrder = ?, Reference = ?, RouteKeyID = ?, Salesman = ?, SalesmanCommission = ?, SalesmanID = ?,
-                            Salutation = ?, SatelliteCustomerID = ?, SatelliteJobKeyID = ?, SatelliteJobNumber = ?,
-                            SatelliteName = ?, SatelliteUploadedDate = ?, SellingPriceExTax = ?, SellingPriceExTax_Converted = ?,
-                            SellingPriceIncTax = ?, SellingPriceIncTax_Converted = ?, TaxAmount = ?, TaxAmount_Converted = ?,
-                            TaxCode = ?, TaxRate = ?, Toughened = ?, VersionCreated = ?, VersionAmended = ?
-                        WHERE JobNumber = 'RB262';
+                        SET DiscountFrame = ?, DiscountFrame2 = ?, DiscountFrame3 = ?, DiscountFrame4 = ?,
+                            DiscountFrame5 = ?, DiscountFrame6 = ?, DiscountFrame7 = ?, DiscountFrame8 = ?,
+                            DiscountFrame9 = ?, DiscountFrame10 = ?, Discount3rdPartyGlass = ?, Discount3rdPartyPanel = ?,
+                            DiscountPartExtra = ?, DiscountSATExtra = ?, DiscountSATExtra2 = ?, DiscountSATExtra3 = ?,
+                            DiscountSATExtra4 = ?, DiscountSATExtra5 = ?, DiscountSATExtra6 = ?, DiscountSATExtra7 = ?,
+                            DiscountSATExtra8 = ?, DiscountSATExtra9 = ?, DiscountSATExtra10 = ?, Email = ?
+                        WHERE JobNumber = 'RB267';
+                        """),
+                        (30, """
+                        UPDATE Heading
+                        SET EmailLong = ?, FaxNo = ?, FensaNumber = ?, FileName = ?,
+                            Fitting = ?, FittingAdvancedID = ?, FittingTeam = ?, FittingTeamID = ?,
+                            GlassAccountNo = ?, GlassBatched = ?, GlassSupplierID = ?, Glazed = ?,
+                            Hidden = ?, HousetypeCategoryID = ?, Initials = ?, InputBy = ?,
+                            InputByID = ?, InvoiceAddress1 = ?, InvoiceAddress2 = ?, InvoiceAddress3 = ?,
+                            InvoiceAddress4 = ?, InvoiceCounty = ?, InvoiceNumber = ?, InvoicePostCode = ?,
+                            InvoicePrinted = ?, InvoiceSettled = ?, InvoiceSettledInformation = ?, JobKeyID = ?,
+                            JobType = ?, MainColour = ?
+                        WHERE JobNumber = 'RB267';
                         """)
                     ]
 
@@ -143,17 +152,6 @@ def update_access_database(row):
                         print(f"Executing chunk with {count} placeholders.")
                         params = row[:count]
                         
-                        # Convert boolean and datetime to appropriate types
-                        params = tuple(
-                            1 if p is True else 0 if p is False else
-                            None if isinstance(p, str) and p == '' else  # Convert empty strings to None
-                            None if isinstance(p, datetime.datetime) and p == datetime.datetime(1899, 12, 30) else  # Handle placeholder date
-                            str(p) if isinstance(p, datetime.datetime) else  # Convert datetime to string if not placeholder
-                            float(p) if isinstance(p, decimal.Decimal) else  # Convert decimal to float
-                            p for p in params
-                        )
-                        
-                        # Debug: Print each parameter type and value
                         for i, p in enumerate(params):
                             print(f"Parameter {i+1}: Value = {p}, Type = {type(p)}")
                         
@@ -168,7 +166,6 @@ def update_access_database(row):
                             print(f"Chunk update failed: {ex}")
                             raise
 
-                        # Update row to exclude already used parameters
                         row = row[count:]
 
                 else:
