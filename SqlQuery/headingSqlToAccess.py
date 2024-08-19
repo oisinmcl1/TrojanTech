@@ -57,18 +57,19 @@ def fetch_data_from_sql():
                InvoiceAddress3, InvoiceAddress4, InvoiceCounty, InvoiceNumber, InvoicePostCode, InvoicePrinted, 
                InvoiceSettled, InvoiceSettledInformation, JobKeyID, JobType, MainColour
         FROM dbo.Heading
-        WHERE JobNumber = 'RB267';
+        WHERE SatelliteJobNumber = 'RB262';
         """
 
         sqlCursor.execute(fetchQuery_Heading)
         row = sqlCursor.fetchone()
 
         if row:
-            print(f"Fetched {len(row)} columns from the SQL Server database.")
+            print(f"Fetched row data: {row}")
             row = tuple(clean_data(value) for value in row)
+            print(f"Cleaned row data: {row}")
             return row
         else:
-            print("No data found for JobNumber = 'RB267'.")
+            print("No data found for SatelliteJobNumber = 'RB262'.")
             return None
 
     except pyodbc.Error as ex:
@@ -102,7 +103,7 @@ def update_access_database(row):
                             BatchIndexOrder = ?, BatchKeyID = ?, BMGlassJob = ?, BrickCavity = ?, BuyUnglazedFrameGlass = ?,
                             BuyUnglazedFromSupplier = ?, BuyPanelsFrom3rdParty = ?, ChangeDate = ?, ChangeTime = ?, CheckedOutTo = ?,
                             CheckOrderCreated = ?, Completed = ?, Contact = ?, Cost = ?, CostLibrary = ?, CounterUniqueKeyID = ?
-                        WHERE JobNumber = 'RB267';
+                        WHERE SatelliteJobNumber = 'RB262';
                         """),
                         (24, """
                         UPDATE Heading
@@ -112,7 +113,7 @@ def update_access_database(row):
                             CustomerTransomDrop = ?, DateAmended = ?, DateCompleted = ?, DateConfirmed = ?,
                             DateCreated = ?, DateDelivery = ?, DateFitted = ?, DateGlassDelivery = ?,
                             DateInProduction = ?, DateOnwardDelivery = ?, DateInvoice = ?, DateLoaded = ?
-                        WHERE JobNumber = 'RB267';
+                        WHERE SatelliteJobNumber = 'RB262';
                         """),
                         (24, """
                         UPDATE Heading
@@ -122,7 +123,7 @@ def update_access_database(row):
                             DeliveryAddress3 = ?, DeliveryAddress4 = ?, DeliveryCounty = ?, DeliveryPostCode = ?,
                             DeliveryStatusID = ?, DeliveryTeam = ?, DeliveryTeamID = ?, DepartmentID = ?,
                             DepositPaid = ?, DepositPaid_Converted = ?, Despatched = ?, Dessian_CurrencyConversion = ?
-                        WHERE JobNumber = 'RB267';
+                        WHERE SatelliteJobNumber = 'RB262';
                         """),
                         (24, """
                         UPDATE Heading
@@ -132,7 +133,7 @@ def update_access_database(row):
                             DiscountPartExtra = ?, DiscountSATExtra = ?, DiscountSATExtra2 = ?, DiscountSATExtra3 = ?,
                             DiscountSATExtra4 = ?, DiscountSATExtra5 = ?, DiscountSATExtra6 = ?, DiscountSATExtra7 = ?,
                             DiscountSATExtra8 = ?, DiscountSATExtra9 = ?, DiscountSATExtra10 = ?, Email = ?
-                        WHERE JobNumber = 'RB267';
+                        WHERE SatelliteJobNumber = 'RB262';
                         """),
                         (30, """
                         UPDATE Heading
@@ -144,7 +145,7 @@ def update_access_database(row):
                             InvoiceAddress4 = ?, InvoiceCounty = ?, InvoiceNumber = ?, InvoicePostCode = ?,
                             InvoicePrinted = ?, InvoiceSettled = ?, InvoiceSettledInformation = ?, JobKeyID = ?,
                             JobType = ?, MainColour = ?
-                        WHERE JobNumber = 'RB267';
+                        WHERE SatelliteJobNumber = 'RB262';
                         """)
                     ]
 
