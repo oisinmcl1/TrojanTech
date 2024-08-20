@@ -1,4 +1,5 @@
 import pyodbc
+import datetime
 
 sqlServer = None
 sqlCursor = None
@@ -81,6 +82,13 @@ def get_Columns(table):
         return None
 
 
+def clean_data(value):
+    if isinstance(value, datetime.datetime):
+        if value == datetime.datetime(1899, 12, 30) or value == datetime.datetime(1900, 1, 1):
+            return None
+    return value
+
+
 def fetch_SQL(JobKeyID, table):
     global sqlCursor
     
@@ -98,7 +106,7 @@ def fetch_SQL(JobKeyID, table):
         row = sqlCursor.fetchone()
 
         if row:
-            data = dict(zip(columns, row))
+            data = dict(zip(columns, [clean_data(val) for val in row]))
             print("\nFetched Data:")
             print(f"{'Column':<30} | Value")
             print("-" * 50)
@@ -114,6 +122,45 @@ def fetch_SQL(JobKeyID, table):
         print(f"SQL query failed: {ex}")
         return None
 
+def update_Access(data, mdb):
+    try:
+        connStr = (
+            r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
+            f"DBQ={mdb};"
+        )
+
+        with pyodbc.connect(connStr) as accessConn:
+            with accessConn.cursor() as accessCursor:
+                print(f"Connection to Access Database: {mdb} was successful!")
+
+                if data:
+                    columns = list(data.keys())
+                    values = list(data.values())
+                    
+                    # Prepare the placeholders for SQL update statement
+                    set_clause = ', '.join(f"{col} = ?" for col in columns)
+                    query = f"UPDATE Heading2 SET {set_clause} WHERE JobKeyID = ?"
+                    
+                    print(f"Executing query: {query}")
+                    print(f"With values: {values + [data['JobKeyID']]}")
+                    
+                    accessCursor.execute(query, *values, data['JobKeyID'])
+                    accessConn.commit()
+                    print(f"Access database updated successfully for JobKeyID {data['JobKeyID']}.")
+                else:
+                    print("No data to update in Access database.")
+
+    except pyodbc.Error as ex:
+        print(f"Access Database connection or update failed: {ex}")
+
+    finally:
+        try:
+            accessCursor.close()
+            accessConn.close()
+        except NameError:
+            pass
+        print("Access Connection Closed.")
+
 
 connect_SQL()
 
@@ -121,7 +168,9 @@ JobKeyID = fetch_JobKeyID()
 
 if JobKeyID is not None:
     print(f"JobKeyID: {JobKeyID}")
-    fetch_SQL(JobKeyID, "dbo.Heading2")
+    data = fetch_SQL(JobKeyID, "dbo.Heading2")
+    if data:
+        update_Access(data, r"E:\BM\FuturaFrames\Orders\2024\Jun\Test\RB262.mdb")
 else:
     print("No valid JobKeyID retrieved.")
 
