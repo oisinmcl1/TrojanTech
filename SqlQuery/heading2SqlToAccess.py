@@ -57,13 +57,20 @@ def get_Columns(sqlCursor, table):
         return None
 
 def clean_data(value):
-    if isinstance(value, datetime.datetime):
+    if isinstance(value, str):
+        value = value.strip()
+        if value == '00:00:00':
+            return None
+        if value == '':
+            return None
+    elif isinstance(value, datetime.datetime):
         if value == datetime.datetime(1899, 12, 30) or value == datetime.datetime(1900, 1, 1):
             return None
-    
-    if isinstance(value, decimal.Decimal):
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    elif isinstance(value, decimal.Decimal):
         return float(value)
-    
+    elif isinstance(value, bool):
+        return 1 if value else 0
     return value
 
 def fetch_SQL(sqlCursor, JobKeyID, table):
@@ -77,7 +84,13 @@ def fetch_SQL(sqlCursor, JobKeyID, table):
         row = sqlCursor.fetchone()
         
         if row:
-            data = dict(zip(columns, [clean_data(val) for val in row]))
+            # Apply clean_data to each value in the row
+            data = {col: clean_data(val) for col, val in zip(columns, row)}
+            print("\nFetched Data:")
+            print(f"{'Column':<30} | Value")
+            print("-" * 50)
+            for col, val in data.items():
+                print(f"{col:<30} | {val}")
             return data
         
         else:
@@ -97,10 +110,14 @@ def update_Access(data, mdb):
                     columns = list(data.keys())
                     values = list(data.values())
                     
-                    set_clause = ', '.join(f"{col} = ?" for col in columns)
+                    set_clause = ', '.join(f"[{col}] = ?" for col in columns)
                     query = f"UPDATE Heading2 SET {set_clause} WHERE JobKeyID = ?"
+                    
+                    # Log the final query and the number of columns vs values
                     print(f"Executing query: {query}")
                     print(f"With values: {values + [data['JobKeyID']]}")
+                    print(f"Number of columns: {len(columns)}")
+                    print(f"Number of values: {len(values) + 1}")  # +1 for JobKeyID
                     
                     accessCursor.execute(query, *values, data['JobKeyID'])
                     accessConn.commit()
