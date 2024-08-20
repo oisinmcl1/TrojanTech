@@ -31,7 +31,7 @@ def close_sql_server_connection():
     except pyodbc.Error as ex:
         print(f"Failed to close SQL connection: {ex}")
 
-def fetch_job_key_id():
+def fetch_JobKeyID():
     global sqlCursor
     
     if not sqlCursor:
@@ -49,9 +49,9 @@ def fetch_job_key_id():
         row = sqlCursor.fetchone()
 
         if row:
-            job_key_id = row[0]
-            print(f"Fetched JobKeyID: {job_key_id}")
-            return job_key_id
+            JobKeyID = row[0]
+            print(f"Fetched JobKeyID: {JobKeyID}")
+            return JobKeyID
         else:
             print("No JobKeyID found for SatelliteJobNumber = 'RB262'")
             return None
@@ -62,10 +62,10 @@ def fetch_job_key_id():
 
 connect_to_sql_server()
 
-job_key_id = fetch_job_key_id()
+JobKeyID = fetch_JobKeyID()
 
-if job_key_id is not None:
-    print(f"JobKeyID for further reference: {job_key_id}")
+if JobKeyID is not None:
+    print(f"JobKeyID: {JobKeyID}")
 else:
     print("No valid JobKeyID retrieved.")
 

@@ -1,40 +1,50 @@
 import pyodbc
 
-def fetch_contact_name():
+def connect_to_sql_server():
     dsn = "Orders"
     database = "FFOrders"
-    satellite_job_number = 'RB262'
-
+    
     try:
-        # Establish connection to SQL Server
         sqlServer = pyodbc.connect(f"DSN={dsn};DATABASE={database};")
         sqlCursor = sqlServer.cursor()
-
         print(f"Connection to SQL Server: {dsn} and Database: {database} was successful!")
+        return sqlServer, sqlCursor
+    
+    except pyodbc.Error as ex:
+        print(f"SQL Server connection failed: {ex}")
+        return None, None
 
-        # SQL query to fetch the Contact name based on SatelliteJobNumber
-        fetchQuery_Contact = """
-        SELECT Contact
-        FROM dbo.Heading
-        WHERE SatelliteJobNumber = ?;
-        """
+def close_sql_server_connection(sqlServer, sqlCursor):
+    try:
+        if sqlCursor:
+            sqlCursor.close()
+        
+        if sqlServer:
+            sqlServer.close()
+        print("SQL Connection Closed.")
+    
+    except pyodbc.Error as ex:
+        print(f"Failed to close SQL connection: {ex}")
 
-        # Execute the query with the satellite job number parameter
-        sqlCursor.execute(fetchQuery_Contact, satellite_job_number)
-        contact_name = sqlCursor.fetchone()
+def get_column_names(table_name):
+    sqlServer, sqlCursor = connect_to_sql_server()
+    
+    if not sqlCursor:
+        print("SQL Server connection is not available.")
+        return None
 
-        if contact_name:
-            print(f"Fetched Contact name for SatelliteJobNumber '{satellite_job_number}': {contact_name[0]}")
-        else:
-            print(f"No data found for SatelliteJobNumber = '{satellite_job_number}'.")
+    try:
+        sqlCursor.execute(f"SELECT * FROM {table_name} WHERE 1=0")  # Select no rows, just get metadata
+        column_names = [column[0] for column in sqlCursor.description]
+        print(f"Column names in '{table_name}': {column_names}")
+        return column_names
 
     except pyodbc.Error as ex:
-        print(f"SQL Server connection or query failed: {ex}")
+        print(f"SQL query failed: {ex}")
+        return None
 
     finally:
-        sqlCursor.close()
-        sqlServer.close()
-        print("SQL Connection Closed.")
+        close_sql_server_connection(sqlServer, sqlCursor)
 
-# Run the script
-fetch_contact_name()
+table_name = "dbo.Heading2"
+get_column_names(table_name)
