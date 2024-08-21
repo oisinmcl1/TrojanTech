@@ -2,7 +2,7 @@ import os
 import zipfile
 import shutil
 import json
-import pyodbc
+import pyodbc  # Use pyodbc for MDB access
 
 # Folder where attachments are saved
 attachments_dir = "C:\\temp\\attachments"
@@ -43,9 +43,17 @@ def process_extracted_files(temp_extract_dir, job_log):
         extracted_item_path = os.path.join(temp_extract_dir, extracted_item)
 
         if extracted_item.endswith('.mdb'):
-            shutil.move(extracted_item_path, attachments_dir)
+            # Handle existing MDB file case
+            dest_path = os.path.join(attachments_dir, extracted_item)
+            if os.path.exists(dest_path):
+                # Rename the new MDB file to avoid overwriting
+                base, ext = os.path.splitext(extracted_item)
+                new_name = f"{base}_new{ext}"
+                dest_path = os.path.join(attachments_dir, new_name)
+            shutil.move(extracted_item_path, dest_path)
+
             job_name = os.path.splitext(extracted_item)[0]
-            date_created = get_date_created_from_mdb(os.path.join(attachments_dir, extracted_item))
+            date_created = get_date_created_from_mdb(dest_path)
             if job_name not in job_log:
                 job_log[job_name] = {'mdb': True, 'svg_folder': False, 'Date': date_created}
             else:
@@ -148,7 +156,13 @@ def cleanup_folder(attachments_dir, unsorted_dir, log_file_path):
         elif item.endswith('.mdb'):
             job_name = os.path.splitext(item)[0]
             date_created = get_date_created_from_mdb(item_path)
-            shutil.move(item_path, attachments_dir)
+            dest_path = os.path.join(attachments_dir, item)
+            if os.path.exists(dest_path):
+                # Rename the new MDB file to avoid overwriting
+                base, ext = os.path.splitext(item)
+                new_name = f"{base}_new{ext}"
+                dest_path = os.path.join(attachments_dir, new_name)
+            shutil.move(item_path, dest_path)
             if job_name not in job_log:
                 job_log[job_name] = {'mdb': True, 'svg_folder': False, 'Date': date_created}
             else:
