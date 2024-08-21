@@ -1,10 +1,9 @@
 import os
-import zipfile
 import shutil
 import json
 import pyodbc  # Use pyodbc for MDB access
 
-# Folder where attachments are saved
+# Folders for attachments and unsorted files
 attachments_dir = "C:\\temp\\attachments"
 unsorted_dir = os.path.join(attachments_dir, "Unsorted")
 log_file_path = os.path.join(attachments_dir, "job_log.json")
@@ -37,48 +36,28 @@ def get_date_created_from_mdb(mdb_file):
         except:
             pass
 
-def process_extracted_files(temp_extract_dir, job_log):
-    """Process files extracted from a ZIP file."""
-    for extracted_item in os.listdir(temp_extract_dir):
-        extracted_item_path = os.path.join(temp_extract_dir, extracted_item)
+def move_svg_files_to_job_folders(directory, job_log):
+    """Move SVG files into folders named after their respective jobs."""
+    for item in os.listdir(directory):
+        item_path = os.path.join(directory, item)
 
-        if extracted_item.endswith('.mdb'):
-            # Handle existing MDB file case
-            dest_path = os.path.join(attachments_dir, extracted_item)
-            if os.path.exists(dest_path):
-                # Rename the new MDB file to avoid overwriting
-                base, ext = os.path.splitext(extracted_item)
-                new_name = f"{base}_new{ext}"
-                dest_path = os.path.join(attachments_dir, new_name)
-            shutil.move(extracted_item_path, dest_path)
-
-            job_name = os.path.splitext(extracted_item)[0]
-            date_created = get_date_created_from_mdb(dest_path)
-            if job_name not in job_log:
-                job_log[job_name] = {'mdb': True, 'svg_folder': False, 'Date': date_created}
-            else:
-                job_log[job_name]['mdb'] = True
-                job_log[job_name]['Date'] = date_created
-
-        elif extracted_item.endswith('.svg'):
-            job_name = extracted_item.split('-')[0]
+        if item.endswith('.svg'):
+            # Extract job name (everything before the first hyphen)
+            job_name = item.split('-')[0].strip()
             svg_folder_path = os.path.join(attachments_dir, job_name)
+
+            # Ensure the folder exists
             os.makedirs(svg_folder_path, exist_ok=True)
-            shutil.move(extracted_item_path, svg_folder_path)
+
+            # Move the SVG file into the job folder
+            shutil.move(item_path, svg_folder_path)
+            print(f"Moved {item} to {svg_folder_path}")
+
+            # Update the log
             if job_name in job_log:
                 job_log[job_name]['svg_folder'] = True
             else:
                 job_log[job_name] = {'mdb': False, 'svg_folder': True}
-
-        else:
-            # Move anything else to Unsorted
-            shutil.move(extracted_item_path, os.path.join(unsorted_dir, extracted_item))
-            job_name = os.path.splitext(extracted_item)[0] if '.' in extracted_item else extracted_item
-            if job_name not in job_log:
-                job_log[job_name] = {'mdb': False, 'svg_folder': False, 'unsorted': True}
-
-    # Remove the temporary extraction directory
-    os.rmdir(temp_extract_dir)
 
 def cleanup_folder(attachments_dir, unsorted_dir, log_file_path):
     # Create the unsorted directory if it doesn't exist
@@ -104,7 +83,7 @@ def cleanup_folder(attachments_dir, unsorted_dir, log_file_path):
             os.remove(item_path)  # Remove the ZIP file after extraction
 
             # Process the extracted files
-            process_extracted_files(temp_extract_dir, job_log)
+            move_svg_files_to_job_folders(temp_extract_dir, job_log)
 
         elif item.endswith('.mdb'):
             job_name = os.path.splitext(item)[0]
@@ -116,14 +95,7 @@ def cleanup_folder(attachments_dir, unsorted_dir, log_file_path):
                 job_log[job_name]['Date'] = date_created
 
         elif item.endswith('.svg'):
-            job_name = item.split('-')[0]
-            svg_folder_path = os.path.join(attachments_dir, job_name)
-            os.makedirs(svg_folder_path, exist_ok=True)
-            shutil.move(item_path, svg_folder_path)
-            if job_name in job_log:
-                job_log[job_name]['svg_folder'] = True
-            else:
-                job_log[job_name] = {'mdb': False, 'svg_folder': True}
+            move_svg_files_to_job_folders(attachments_dir, job_log)
 
         elif os.path.isdir(item_path) and not item.startswith('SVG'):
             job_name = item
@@ -139,51 +111,22 @@ def cleanup_folder(attachments_dir, unsorted_dir, log_file_path):
             if job_name not in job_log:
                 job_log[job_name] = {'mdb': False, 'svg_folder': False, 'unsorted': True}
 
-    # Second pass: Check the Unsorted folder and process any missed files
+    # Process remaining SVG files in Unsorted folder
+    move_svg_files_to_job_folders(unsorted_dir, job_log)
+
+    # Double-check to remove any files left in Unsorted if successfully moved
     for item in os.listdir(unsorted_dir):
         item_path = os.path.join(unsorted_dir, item)
+        job_name = item.split('-')[0].strip()
+        svg_folder_path = os.path.join(attachments_dir, job_name)
 
-        # Identify and process ZIP files that may still contain useful content
-        if item.endswith('.zip'):
-            temp_extract_dir = os.path.join(unsorted_dir, f"_extract_{os.path.splitext(item)[0]}")
-            os.makedirs(temp_extract_dir, exist_ok=True)
-            extract_zip(item_path, temp_extract_dir)
-            os.remove(item_path)  # Remove the ZIP file after extraction
+        if os.path.exists(os.path.join(svg_folder_path, item)):
+            os.remove(item_path)
+            print(f"Removed {item} from Unsorted as it was successfully moved.")
 
-            # Process the extracted files
-            process_extracted_files(temp_extract_dir, job_log)
-
-        elif item.endswith('.mdb'):
-            job_name = os.path.splitext(item)[0]
-            date_created = get_date_created_from_mdb(item_path)
-            dest_path = os.path.join(attachments_dir, item)
-            if os.path.exists(dest_path):
-                # Rename the new MDB file to avoid overwriting
-                base, ext = os.path.splitext(item)
-                new_name = f"{base}_new{ext}"
-                dest_path = os.path.join(attachments_dir, new_name)
-            shutil.move(item_path, dest_path)
-            if job_name not in job_log:
-                job_log[job_name] = {'mdb': True, 'svg_folder': False, 'Date': date_created}
-            else:
-                job_log[job_name]['mdb'] = True
-                job_log[job_name]['Date'] = date_created
-
-        elif item.endswith('.svg'):
-            job_name = item.split('-')[0]
-            svg_folder_path = os.path.join(attachments_dir, job_name)
-            os.makedirs(svg_folder_path, exist_ok=True)
-            shutil.move(item_path, svg_folder_path)
-            if job_name in job_log:
-                job_log[job_name]['svg_folder'] = True
-            else:
-                job_log[job_name] = {'mdb': False, 'svg_folder': True}
-
-        else:
-            # Keep anything that doesn't match the criteria in Unsorted
-            job_name = os.path.splitext(item)[0] if '.' in item else item
-            if job_name not in job_log:
-                job_log[job_name] = {'mdb': False, 'svg_folder': False, 'unsorted': True}
+    # Check if Unsorted is empty and remove it if so
+    if not os.listdir(unsorted_dir):
+        os.rmdir(unsorted_dir)
 
     # Save the log to a JSON file
     with open(log_file_path, 'w') as log_file:
@@ -191,4 +134,4 @@ def cleanup_folder(attachments_dir, unsorted_dir, log_file_path):
 
 if __name__ == "__main__":
     cleanup_folder(attachments_dir, unsorted_dir, log_file_path)
-    print(f"Folder cleanup complete. Unsorted files have been moved to the 'Unsorted' folder, and job log has been saved to {log_file_path}.")
+    print(f"Folder cleanup complete. SVG files have been moved to job folders, and job log has been saved to {log_file_path}.")
