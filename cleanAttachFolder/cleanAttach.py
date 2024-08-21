@@ -2,6 +2,7 @@ import os
 import zipfile
 import shutil
 import json
+import pypyodbc
 
 # Folder where attachments are saved
 attachments_dir = "C:\\temp\\attachments"
@@ -12,6 +13,26 @@ def extract_svg_zip(zip_path, target_dir):
     """Extract SVG files from a ZIP file into the specified directory."""
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(target_dir)
+
+def get_date_created_from_mdb(mdb_file):
+    """Extract the DateCreated field from the Heading table in the MDB file."""
+    try:
+        conn_str = f'DRIVER={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={mdb_file};'
+        conn = pypyodbc.connect(conn_str)
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT TOP 1 DateCreated FROM Heading")
+        row = cursor.fetchone()
+        if row:
+            return str(row[0])
+        else:
+            return None
+    except Exception as e:
+        print(f"Error reading MDB file {mdb_file}: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
 
 def cleanup_folder(attachments_dir, unsorted_dir, log_file_path):
     # Create the unsorted directory if it doesn't exist
@@ -32,10 +53,12 @@ def cleanup_folder(attachments_dir, unsorted_dir, log_file_path):
         # Identify MDB files and categorize them by job name
         if item.endswith('.mdb'):
             job_name = os.path.splitext(item)[0]
+            date_created = get_date_created_from_mdb(item_path)
             if job_name not in job_log:
-                job_log[job_name] = {'mdb': True, 'svg_folder': False}
+                job_log[job_name] = {'mdb': True, 'svg_folder': False, 'Date': date_created}
             else:
                 job_log[job_name]['mdb'] = True
+                job_log[job_name]['Date'] = date_created
 
         # Identify ZIP files containing SVGs and process them
         elif item.endswith('.zip') and item.startswith('SVG'):
