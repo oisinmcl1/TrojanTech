@@ -30,7 +30,7 @@ def close_SQL(sqlServer, sqlCursor):
 
 def fetch_JobKeyID(sqlCursor, satellite_job_number):
     try:
-        fetchQuery_JobKeyID = "SELECT JobKeyID FROM dbo.Heading WHERE SatelliteJobNumber = ?;"
+        fetchQuery_JobKeyID = "SELECT JobKeyID FROM dbo.Heading WHERE JobNumber = ?;"
         sqlCursor.execute(fetchQuery_JobKeyID, satellite_job_number)
         row = sqlCursor.fetchone()
         
@@ -38,7 +38,7 @@ def fetch_JobKeyID(sqlCursor, satellite_job_number):
             return row[0]
         
         else:
-            print(f"No JobKeyID found for SatelliteJobNumber = '{satellite_job_number}'")
+            print(f"No JobKeyID found for JobNumber = '{satellite_job_number}'")
             return None
     
     except pyodbc.Error as ex:

@@ -73,7 +73,7 @@ def fetch_data_from_sql(satellite_job_number):
                SurchargePercent, SurchargeValue, Surveyor, SurveyorID, TaxAmount, TaxAmount_Converted, TaxCode,
                TaxRate, Toughened, VersionCreated, VersionAmended, Waypoint, WER, WERid, Urgent, UValue
         FROM dbo.Heading
-        WHERE SatelliteJobNumber = '{satellite_job_number}';
+        WHERE JobNumber = '{satellite_job_number}';
         """
 
         sqlCursor.execute(fetchQuery_Heading)
@@ -104,8 +104,8 @@ def fetch_data_from_sql(satellite_job_number):
         sqlServer.close()
         print("SQL Connection Closed.")
 
-def update_access_database(row, satellite_job_number):
-    mdb = f"C:\\temp\\attachments\\{satellite_job_number}.mdb"
+def update_access_database(row, job_number):
+    mdb = f"C:\\temp\\attachments\\{job_number}.mdb"
 
     try:
         print(f"Attempting to connect to Access Database: {mdb}")
@@ -131,7 +131,7 @@ def update_access_database(row, satellite_job_number):
                             Contact = ?, Cost = ?, CostLibrary = ?, CounterUniqueKeyID = ?, 
                             CreatedFrom = ?, CreditAmount = ?, CreditLimit = ?, CreditNote = ?, 
                             CreditNoteNumber = ?, CurrencyCharacter = ?, CurrencyConversion = ?, CustomerID = ?
-                        WHERE SatelliteJobNumber = ?;
+                        WHERE JobNumber = ?;
                         """,
                         """
                         UPDATE Heading SET 
@@ -143,7 +143,7 @@ def update_access_database(row, satellite_job_number):
                             DateRoofDelivery = ?, DateSawFileCreated = ?, DateSurvey = ?, DateToughGlassDelivery = ?, 
                             DatePreOrderConverted = ?, DatePreQuoteConverted = ?, DeliveryAddress1 = ?, DeliveryAddress2 = ?, 
                             DeliveryAddress3 = ?, DeliveryAddress4 = ?, DeliveryCounty = ?, DeliveryPostCode = ?
-                        WHERE SatelliteJobNumber = ?;
+                        WHERE JobNumber = ?;
                         """,
                         """
                         UPDATE Heading SET 
@@ -155,7 +155,7 @@ def update_access_database(row, satellite_job_number):
                             DiscountPartExtra = ?, DiscountSATExtra = ?, DiscountSATExtra2 = ?, DiscountSATExtra3 = ?, 
                             DiscountSATExtra4 = ?, DiscountSATExtra5 = ?, DiscountSATExtra6 = ?, DiscountSATExtra7 = ?, 
                             DiscountSATExtra8 = ?, DiscountSATExtra9 = ?, DiscountSATExtra10 = ?
-                        WHERE SatelliteJobNumber = ?;
+                        WHERE JobNumber = ?;
                         """,
                         """
                         UPDATE Heading SET 
@@ -167,7 +167,7 @@ def update_access_database(row, satellite_job_number):
                             InvoiceAddress2 = ?, InvoiceAddress3 = ?, InvoiceAddress4 = ?, InvoiceCounty = ?, 
                             InvoiceNumber = ?, InvoicePostCode = ?, InvoicePrinted = ?, InvoiceSettled = ?, 
                             InvoiceSettledInformation = ?, JobKeyID = ?, JobNumber = ?, JobType = ?
-                        WHERE SatelliteJobNumber = ?;
+                        WHERE JobNumber = ?;
                         """,
                         """
                         UPDATE Heading SET 
@@ -194,7 +194,7 @@ def update_access_database(row, satellite_job_number):
                             TaxAmount_Converted = ?, TaxCode = ?, TaxRate = ?, Toughened = ?, 
                             VersionCreated = ?, VersionAmended = ?, Waypoint = ?, WER = ?, 
                             WERid = ?, Urgent = ?, UValue = ?
-                        WHERE SatelliteJobNumber = ?;
+                        WHERE JobNumber = ?;
                         """
                     ]
 
@@ -205,7 +205,7 @@ def update_access_database(row, satellite_job_number):
                     start_idx = 0
                     for idx, (query, chunk_size) in enumerate(zip(update_queries, chunk_sizes)):
                         end_idx = start_idx + chunk_size
-                        params = row[start_idx:end_idx] + (satellite_job_number,)
+                        params = row[start_idx:end_idx] + (job_number,)
 
                         # Debugging outputs
                         print(f"Executing update query {idx+1}...")
@@ -238,7 +238,7 @@ def update_access_database(row, satellite_job_number):
         print("Access Connection Closed.")
 
 # Run the script
-satellite_job_number = 'RB487'  # Change this as needed
+satellite_job_number = 'RB431R'  # Change this as needed
 row_data = fetch_data_from_sql(satellite_job_number)
 if row_data:
     update_access_database(row_data, satellite_job_number)
