@@ -25,7 +25,7 @@ def clean_data(value, expected_type=None):
     else:
         return value
 
-def fetch_data_from_sql():
+def fetch_data_from_sql(satellite_job_number):
     dsn = "Orders"
     database = "FFOrders"
     try:
@@ -36,7 +36,7 @@ def fetch_data_from_sql():
         print(f"Connection to SQL Server was successful!")
         print(f"Executing SQL query...")
 
-        fetchQuery_Heading = """
+        fetchQuery_Heading = f"""
         SELECT AccountNo, AcknowledgementStatus, AmountPaid, AmountPaid_Converted, Architect, Archive,
                ArchivedCopyKeyID, ArchiveZip, BatchIndexOrder, BatchKeyID, BMGlassJob, BrickCavity,
                BuyUnglazedFrameGlass, BuyUnglazedFromSupplier, BuyPanelsFrom3rdParty, ChangeDate, ChangeTime,
@@ -73,7 +73,7 @@ def fetch_data_from_sql():
                SurchargePercent, SurchargeValue, Surveyor, SurveyorID, TaxAmount, TaxAmount_Converted, TaxCode,
                TaxRate, Toughened, VersionCreated, VersionAmended, Waypoint, WER, WERid, Urgent, UValue
         FROM dbo.Heading
-        WHERE SatelliteJobNumber = 'RB262';
+        WHERE SatelliteJobNumber = '{satellite_job_number}';
         """
 
         sqlCursor.execute(fetchQuery_Heading)
@@ -92,7 +92,7 @@ def fetch_data_from_sql():
             
             return row
         else:
-            print("No data found for SatelliteJobNumber = 'RB262'.")
+            print(f"No data found for SatelliteJobNumber = '{satellite_job_number}'.")
             return None
 
     except pyodbc.Error as ex:
@@ -104,8 +104,8 @@ def fetch_data_from_sql():
         sqlServer.close()
         print("SQL Connection Closed.")
 
-def update_access_database(row):
-    mdb = r"E:\BM\FuturaFrames\Orders\2024\Jun\Test\RB262.mdb"
+def update_access_database(row, satellite_job_number):
+    mdb = f"C:\\temp\\attachments\\{satellite_job_number}.mdb"
 
     try:
         print(f"Attempting to connect to Access Database: {mdb}")
@@ -205,7 +205,7 @@ def update_access_database(row):
                     start_idx = 0
                     for idx, (query, chunk_size) in enumerate(zip(update_queries, chunk_sizes)):
                         end_idx = start_idx + chunk_size
-                        params = row[start_idx:end_idx] + ('RB262',)
+                        params = row[start_idx:end_idx] + (satellite_job_number,)
 
                         # Debugging outputs
                         print(f"Executing update query {idx+1}...")
@@ -237,11 +237,10 @@ def update_access_database(row):
             pass
         print("Access Connection Closed.")
 
-
-
 # Run the script
-row_data = fetch_data_from_sql()
+satellite_job_number = 'RB487'  # Change this as needed
+row_data = fetch_data_from_sql(satellite_job_number)
 if row_data:
-    update_access_database(row_data)
+    update_access_database(row_data, satellite_job_number)
 else:
     print("No data was returned from the SQL query.")

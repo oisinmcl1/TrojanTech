@@ -28,17 +28,17 @@ def close_SQL(sqlServer, sqlCursor):
     except pyodbc.Error as ex:
         print(f"Failed to close SQL connection: {ex}")
 
-def fetch_JobKeyID(sqlCursor):
+def fetch_JobKeyID(sqlCursor, satellite_job_number):
     try:
-        fetchQuery_JobKeyID = "SELECT JobKeyID FROM dbo.Heading WHERE SatelliteJobNumber = 'RB262';"
-        sqlCursor.execute(fetchQuery_JobKeyID)
+        fetchQuery_JobKeyID = "SELECT JobKeyID FROM dbo.Heading WHERE SatelliteJobNumber = ?;"
+        sqlCursor.execute(fetchQuery_JobKeyID, satellite_job_number)
         row = sqlCursor.fetchone()
         
         if row:
             return row[0]
         
         else:
-            print("No JobKeyID found for SatelliteJobNumber = 'RB262'")
+            print(f"No JobKeyID found for SatelliteJobNumber = '{satellite_job_number}'")
             return None
     
     except pyodbc.Error as ex:
@@ -74,6 +74,7 @@ def clean_data(value):
     return value
 
 def fetch_SQL(sqlCursor, JobKeyID, table):
+    # Only keep columns that exist in Access database
     access_columns = [
         'ANG_MixedGlazing', 'ANG_Weight', 'ANG_Addon', 'ANG_Packs', 'ANG_Trickle', 'ANG_CillHorn', 
         'ANG_CustGlass', 'ANG_Decorative', 'ANG_Brilliant', 'BuildingHeight', 'BuildingLifeExpectancy', 
@@ -123,7 +124,9 @@ def fetch_SQL(sqlCursor, JobKeyID, table):
         print(f"SQL query failed: {ex}")
         return None
 
-def update_Access(data, mdb):
+def update_Access(data, satellite_job_number):
+    mdb = f"C:\\temp\\attachments\\{satellite_job_number}.mdb"
+    
     try:
         connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};" f"DBQ={mdb};")
         with pyodbc.connect(connStr) as accessConn:
@@ -151,17 +154,17 @@ def update_Access(data, mdb):
     except pyodbc.Error as ex:
         print(f"Access Database connection or update failed: {ex}")
 
-def main():
+def main(satellite_job_number):
     sqlServer, sqlCursor = connect_SQL()
     if not sqlCursor:
         return
 
-    JobKeyID = fetch_JobKeyID(sqlCursor)
+    JobKeyID = fetch_JobKeyID(sqlCursor, satellite_job_number)
     if JobKeyID:
         data = fetch_SQL(sqlCursor, JobKeyID, "dbo.Heading2")
         if data:
-            update_Access(data, r"E:\BM\FuturaFrames\Orders\2024\Jun\Test\RB262.mdb")
+            update_Access(data, satellite_job_number)
     close_SQL(sqlServer, sqlCursor)
 
 if __name__ == "__main__":
-    main()
+    main('RB486')
