@@ -29,10 +29,12 @@ def fetch_data_from_sql():
     dsn = "Orders"
     database = "FFOrders"
     try:
+        print(f"Attempting to connect to SQL Server: DSN={dsn}, Database={database}")
         sqlServer = pyodbc.connect(f"DSN={dsn};DATABASE={database};")
         sqlCursor = sqlServer.cursor()
 
-        print(f"Connection to SQL Server: {dsn} and Database: {database} was successful!")
+        print(f"Connection to SQL Server was successful!")
+        print(f"Executing SQL query...")
 
         fetchQuery_Heading = """
         SELECT AccountNo, AcknowledgementStatus, AmountPaid, AmountPaid_Converted, Architect, Archive,
@@ -55,7 +57,21 @@ def fetch_data_from_sql():
                FittingAdvancedID, FittingTeam, FittingTeamID, GlassAccountNo, GlassBatched, GlassSupplierID, Glazed, 
                Hidden, HousetypeCategoryID, Initials, InputBy, InputByID, InvoiceAddress1, InvoiceAddress2, 
                InvoiceAddress3, InvoiceAddress4, InvoiceCounty, InvoiceNumber, InvoicePostCode, InvoicePrinted, 
-               InvoiceSettled, InvoiceSettledInformation, JobKeyID, JobType, MainColour
+               InvoiceSettled, InvoiceSettledInformation, JobKeyID, JobNumber, JobType, MainColour,
+               MasterJobKeyID, Mobile, Name, NettDeliveryCharge, NettDeliveryCharge_Converted, Notes, OmitGlazingMethodGlassFactory,
+               OmitGlazingMethodGlassSite, OmitGlazingMethodUnglazedSpecific, OmitGlazingMethodUnglazedGeneric, OmitGlazingMethodPanelFactory,
+               OmitGlazingMethodPanelSite, OmitGlazingMethodPanelUnglazedSpecific, OmitGlazingMethodPanelUnglazedGeneric,
+               OmitStock, OnHold, OrderbookID, OrderStatus, PanelSupplierID, PaymentMethod, PaymentMethodID, PhoneNo, Posted,
+               PreOrderPrinted, PreQuotePrinted, PriceGrids, Projectname, QuantityFabricationUnits, QuantityFabricationUnits_Fabrication,
+               QuantityFrames, QuantityGlass, QuantityGlassAnnealed, QuantityGlassLaminated, QuantityGlassObscure, QuantityGlassToughened,
+               QuantityPanels, QuantityPanelsFlat, QuantityPanelsMoulded, QuantityRoofs, QuantityRoofPacks, QuantityUnglazed,
+               QuoteNumber, QuotePrinted, ReceivedOrder, Reference, Remake, RemakeCount, RemakePro, RemakeTypeID,
+               RoofwrightRoofCost, RoofwrightRoofPrice, RoofwrightBaseCost, RoofwrightBasePrice, RouteKeyID,
+               Salesman, SalesmanCommission, SalesmanID, Salutation, SatelliteCustomerID, SatelliteJobKeyID,
+               SatelliteJobNumber, SatelliteName, SatelliteUploadedDate, SellingPriceExTax, SellingPriceExTax_Converted,
+               SellingPriceIncTax, SellingPriceIncTax_Converted, SettlementDiscount, Status, StockExtraCostPlus, 
+               SurchargePercent, SurchargeValue, Surveyor, SurveyorID, TaxAmount, TaxAmount_Converted, TaxCode,
+               TaxRate, Toughened, VersionCreated, VersionAmended, Waypoint, WER, WERid, Urgent, UValue
         FROM dbo.Heading
         WHERE SatelliteJobNumber = 'RB262';
         """
@@ -64,9 +80,16 @@ def fetch_data_from_sql():
         row = sqlCursor.fetchone()
 
         if row:
-            print(f"Fetched row data: {row}")
+            print("Fetched row data from SQL Server:")
+            for idx, value in enumerate(row):
+                print(f"Column {idx+1}: {value} (Type: {type(value)})")
+                
             row = tuple(clean_data(value) for value in row)
-            print(f"Cleaned row data: {row}")
+
+            print("\nCleaned data to be updated in Access Database:")
+            for idx, value in enumerate(row):
+                print(f"Column {idx+1}: {value} (Type: {type(value)})")
+            
             return row
         else:
             print("No data found for SatelliteJobNumber = 'RB262'.")
@@ -85,6 +108,7 @@ def update_access_database(row):
     mdb = r"E:\BM\FuturaFrames\Orders\2024\Jun\Test\RB262.mdb"
 
     try:
+        print(f"Attempting to connect to Access Database: {mdb}")
         connStr = (
             r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
             f"DBQ={mdb};"
@@ -95,79 +119,109 @@ def update_access_database(row):
                 print(f"Connection to Access Database: {mdb} was successful!")
 
                 if row:
-                    chunks = [
-                        (24, """
-                        UPDATE Heading
-                        SET AccountNo = ?, AcknowledgementStatus = ?, AmountPaid = ?,
-                            AmountPaid_Converted = ?, Architect = ?, Archive = ?, ArchivedCopyKeyID = ?, ArchiveZip = ?,
-                            BatchIndexOrder = ?, BatchKeyID = ?, BMGlassJob = ?, BrickCavity = ?, BuyUnglazedFrameGlass = ?,
-                            BuyUnglazedFromSupplier = ?, BuyPanelsFrom3rdParty = ?, ChangeDate = ?, ChangeTime = ?, CheckedOutTo = ?,
-                            CheckOrderCreated = ?, Completed = ?, Contact = ?, Cost = ?, CostLibrary = ?, CounterUniqueKeyID = ?
-                        WHERE SatelliteJobNumber = 'RB262';
-                        """),
-                        (24, """
-                        UPDATE Heading
-                        SET CreatedFrom = ?, CreditAmount = ?, CreditLimit = ?, CreditNote = ?,
-                            CreditNoteNumber = ?, CurrencyCharacter = ?, CurrencyConversion = ?, CustomerID = ?,
-                            CustomerType = ?, CustomerUseMarkupPerColour = ?, CustomerUsePrimeAperture = ?, CustomerMidrailHeight = ?,
-                            CustomerTransomDrop = ?, DateAmended = ?, DateCompleted = ?, DateConfirmed = ?,
-                            DateCreated = ?, DateDelivery = ?, DateFitted = ?, DateGlassDelivery = ?,
-                            DateInProduction = ?, DateOnwardDelivery = ?, DateInvoice = ?, DateLoaded = ?
-                        WHERE SatelliteJobNumber = 'RB262';
-                        """),
-                        (24, """
-                        UPDATE Heading
-                        SET DateOrder = ?, DatePaid = ?, DatePaidSeveral = ?, DatePanelDelivery = ?,
-                            DateRoofDelivery = ?, DateSawFileCreated = ?, DateSurvey = ?, DateToughGlassDelivery = ?,
-                            DatePreOrderConverted = ?, DatePreQuoteConverted = ?, DeliveryAddress1 = ?, DeliveryAddress2 = ?,
-                            DeliveryAddress3 = ?, DeliveryAddress4 = ?, DeliveryCounty = ?, DeliveryPostCode = ?,
-                            DeliveryStatusID = ?, DeliveryTeam = ?, DeliveryTeamID = ?, DepartmentID = ?,
-                            DepositPaid = ?, DepositPaid_Converted = ?, Despatched = ?, Dessian_CurrencyConversion = ?
-                        WHERE SatelliteJobNumber = 'RB262';
-                        """),
-                        (24, """
-                        UPDATE Heading
-                        SET DiscountFrame = ?, DiscountFrame2 = ?, DiscountFrame3 = ?, DiscountFrame4 = ?,
-                            DiscountFrame5 = ?, DiscountFrame6 = ?, DiscountFrame7 = ?, DiscountFrame8 = ?,
-                            DiscountFrame9 = ?, DiscountFrame10 = ?, Discount3rdPartyGlass = ?, Discount3rdPartyPanel = ?,
-                            DiscountPartExtra = ?, DiscountSATExtra = ?, DiscountSATExtra2 = ?, DiscountSATExtra3 = ?,
-                            DiscountSATExtra4 = ?, DiscountSATExtra5 = ?, DiscountSATExtra6 = ?, DiscountSATExtra7 = ?,
-                            DiscountSATExtra8 = ?, DiscountSATExtra9 = ?, DiscountSATExtra10 = ?, Email = ?
-                        WHERE SatelliteJobNumber = 'RB262';
-                        """),
-                        (30, """
-                        UPDATE Heading
-                        SET EmailLong = ?, FaxNo = ?, FensaNumber = ?, FileName = ?,
-                            Fitting = ?, FittingAdvancedID = ?, FittingTeam = ?, FittingTeamID = ?,
-                            GlassAccountNo = ?, GlassBatched = ?, GlassSupplierID = ?, Glazed = ?,
-                            Hidden = ?, HousetypeCategoryID = ?, Initials = ?, InputBy = ?,
-                            InputByID = ?, InvoiceAddress1 = ?, InvoiceAddress2 = ?, InvoiceAddress3 = ?,
-                            InvoiceAddress4 = ?, InvoiceCounty = ?, InvoiceNumber = ?, InvoicePostCode = ?,
-                            InvoicePrinted = ?, InvoiceSettled = ?, InvoiceSettledInformation = ?, JobKeyID = ?,
-                            JobType = ?, MainColour = ?
-                        WHERE SatelliteJobNumber = 'RB262';
-                        """)
+                    # Update queries broken into chunks
+                    update_queries = [
+                        """
+                        UPDATE Heading SET 
+                            AccountNo = ?, AcknowledgementStatus = ?, AmountPaid = ?, AmountPaid_Converted = ?, 
+                            Architect = ?, Archive = ?, ArchivedCopyKeyID = ?, ArchiveZip = ?, 
+                            BatchIndexOrder = ?, BatchKeyID = ?, BMGlassJob = ?, BrickCavity = ?, 
+                            BuyUnglazedFrameGlass = ?, BuyUnglazedFromSupplier = ?, BuyPanelsFrom3rdParty = ?, ChangeDate = ?, 
+                            ChangeTime = ?, CheckedOutTo = ?, CheckOrderCreated = ?, Completed = ?, 
+                            Contact = ?, Cost = ?, CostLibrary = ?, CounterUniqueKeyID = ?, 
+                            CreatedFrom = ?, CreditAmount = ?, CreditLimit = ?, CreditNote = ?, 
+                            CreditNoteNumber = ?, CurrencyCharacter = ?, CurrencyConversion = ?, CustomerID = ?
+                        WHERE SatelliteJobNumber = ?;
+                        """,
+                        """
+                        UPDATE Heading SET 
+                            CustomerType = ?, CustomerUseMarkupPerColour = ?, CustomerUsePrimeAperture = ?, CustomerMidrailHeight = ?, 
+                            CustomerTransomDrop = ?, DateAmended = ?, DateCompleted = ?, DateConfirmed = ?, 
+                            DateCreated = ?, DateDelivery = ?, DateFitted = ?, DateGlassDelivery = ?, 
+                            DateInProduction = ?, DateOnwardDelivery = ?, DateInvoice = ?, DateLoaded = ?, 
+                            DateOrder = ?, DatePaid = ?, DatePaidSeveral = ?, DatePanelDelivery = ?, 
+                            DateRoofDelivery = ?, DateSawFileCreated = ?, DateSurvey = ?, DateToughGlassDelivery = ?, 
+                            DatePreOrderConverted = ?, DatePreQuoteConverted = ?, DeliveryAddress1 = ?, DeliveryAddress2 = ?, 
+                            DeliveryAddress3 = ?, DeliveryAddress4 = ?, DeliveryCounty = ?, DeliveryPostCode = ?
+                        WHERE SatelliteJobNumber = ?;
+                        """,
+                        """
+                        UPDATE Heading SET 
+                            DeliveryStatusID = ?, DeliveryTeam = ?, DeliveryTeamID = ?, DepartmentID = ?, 
+                            DepositPaid = ?, DepositPaid_Converted = ?, Despatched = ?, Dessian_CurrencyConversion = ?, 
+                            DiscountFrame = ?, DiscountFrame2 = ?, DiscountFrame3 = ?, DiscountFrame4 = ?, 
+                            DiscountFrame5 = ?, DiscountFrame6 = ?, DiscountFrame7 = ?, DiscountFrame8 = ?, 
+                            DiscountFrame9 = ?, DiscountFrame10 = ?, Discount3rdPartyGlass = ?, Discount3rdPartyPanel = ?, 
+                            DiscountPartExtra = ?, DiscountSATExtra = ?, DiscountSATExtra2 = ?, DiscountSATExtra3 = ?, 
+                            DiscountSATExtra4 = ?, DiscountSATExtra5 = ?, DiscountSATExtra6 = ?, DiscountSATExtra7 = ?, 
+                            DiscountSATExtra8 = ?, DiscountSATExtra9 = ?, DiscountSATExtra10 = ?
+                        WHERE SatelliteJobNumber = ?;
+                        """,
+                        """
+                        UPDATE Heading SET 
+                            Email = ?, EmailLong = ?, FaxNo = ?, FensaNumber = ?, 
+                            FileName = ?, Fitting = ?, FittingAdvancedID = ?, 
+                            FittingTeam = ?, FittingTeamID = ?, GlassAccountNo = ?, GlassBatched = ?, 
+                            GlassSupplierID = ?, Glazed = ?, Hidden = ?, HousetypeCategoryID = ?, 
+                            Initials = ?, InputBy = ?, InputByID = ?, InvoiceAddress1 = ?, 
+                            InvoiceAddress2 = ?, InvoiceAddress3 = ?, InvoiceAddress4 = ?, InvoiceCounty = ?, 
+                            InvoiceNumber = ?, InvoicePostCode = ?, InvoicePrinted = ?, InvoiceSettled = ?, 
+                            InvoiceSettledInformation = ?, JobKeyID = ?, JobNumber = ?, JobType = ?
+                        WHERE SatelliteJobNumber = ?;
+                        """,
+                        """
+                        UPDATE Heading SET 
+                            MainColour = ?, MasterJobKeyID = ?, Mobile = ?, 
+                            Name = ?, NettDeliveryCharge = ?, NettDeliveryCharge_Converted = ?, Notes = ?, 
+                            OmitGlazingMethodGlassFactory = ?, OmitGlazingMethodGlassSite = ?, OmitGlazingMethodUnglazedSpecific = ?, 
+                            OmitGlazingMethodUnglazedGeneric = ?, OmitGlazingMethodPanelFactory = ?, OmitGlazingMethodPanelSite = ?, 
+                            OmitGlazingMethodPanelUnglazedSpecific = ?, OmitGlazingMethodPanelUnglazedGeneric = ?, OmitStock = ?, 
+                            OnHold = ?, OrderbookID = ?, OrderStatus = ?, PanelSupplierID = ?, 
+                            PaymentMethod = ?, PaymentMethodID = ?, PhoneNo = ?, Posted = ?, 
+                            PreOrderPrinted = ?, PreQuotePrinted = ?, PriceGrids = ?, Projectname = ?, 
+                            QuantityFabricationUnits = ?, QuantityFabricationUnits_Fabrication = ?, QuantityFrames = ?, QuantityGlass = ?, 
+                            QuantityGlassAnnealed = ?, QuantityGlassLaminated = ?, QuantityGlassObscure = ?, QuantityGlassToughened = ?, 
+                            QuantityPanels = ?, QuantityPanelsFlat = ?, QuantityPanelsMoulded = ?, QuantityRoofs = ?, 
+                            QuantityRoofPacks = ?, QuantityUnglazed = ?, QuoteNumber = ?, QuotePrinted = ?, 
+                            ReceivedOrder = ?, Reference = ?, Remake = ?, RemakeCount = ?, 
+                            RemakePro = ?, RemakeTypeID = ?, RoofwrightRoofCost = ?, RoofwrightRoofPrice = ?, 
+                            RoofwrightBaseCost = ?, RoofwrightBasePrice = ?, RouteKeyID = ?, Salesman = ?, 
+                            SalesmanCommission = ?, SalesmanID = ?, Salutation = ?, SatelliteCustomerID = ?, 
+                            SatelliteJobKeyID = ?, SatelliteJobNumber = ?, SatelliteName = ?, SatelliteUploadedDate = ?, 
+                            SellingPriceExTax = ?, SellingPriceExTax_Converted = ?, SellingPriceIncTax = ?, SellingPriceIncTax_Converted = ?, 
+                            SettlementDiscount = ?, Status = ?, StockExtraCostPlus = ?, SurchargePercent = ?, 
+                            SurchargeValue = ?, Surveyor = ?, SurveyorID = ?, TaxAmount = ?, 
+                            TaxAmount_Converted = ?, TaxCode = ?, TaxRate = ?, Toughened = ?, 
+                            VersionCreated = ?, VersionAmended = ?, Waypoint = ?, WER = ?, 
+                            WERid = ?, Urgent = ?, UValue = ?
+                        WHERE SatelliteJobNumber = ?;
+                        """
                     ]
 
-                    for count, query in chunks:
-                        print(f"Executing chunk with {count} placeholders.")
-                        params = row[:count]
-                        
-                        for i, p in enumerate(params):
-                            print(f"Parameter {i+1}: Value = {p}, Type = {type(p)}")
-                        
-                        print(f"SQL Query: {query}")
-                        print(f"Number of parameters: {len(params)}")
+                    # Adjust chunk sizes according to the number of placeholders
+                    chunk_sizes = [32, 32, 31, 31, 88]  # Adjusted to match the query placeholders
 
-                        try:
-                            accessCursor.execute(query, *params)
-                            accessConn.commit()
-                            print(f"Chunk with {count} placeholders updated successfully.")
-                        except pyodbc.Error as ex:
-                            print(f"Chunk update failed: {ex}")
-                            raise
+                    # Execute each chunk
+                    start_idx = 0
+                    for idx, (query, chunk_size) in enumerate(zip(update_queries, chunk_sizes)):
+                        end_idx = start_idx + chunk_size
+                        params = row[start_idx:end_idx] + ('RB262',)
 
-                        row = row[count:]
+                        # Debugging outputs
+                        print(f"Executing update query {idx+1}...")
+                        print(f"Query: {query}")
+                        print(f"Number of placeholders: {query.count('?')}")
+                        print(f"Params{idx+1}: {params}")
+                        print(f"Number of parameters provided: {len(params)}")
+
+                        assert len(params) == query.count('?'), f"Mismatch in query {idx+1} between placeholders and parameters."
+
+                        accessCursor.execute(query, params)
+                        start_idx += chunk_size  # Move to the next set of parameters
+
+                    # Commit all changes
+                    accessConn.commit()
+                    print("All updates committed successfully.")
 
                 else:
                     print("No data to update in Access database.")
@@ -183,7 +237,11 @@ def update_access_database(row):
             pass
         print("Access Connection Closed.")
 
+
+
 # Run the script
 row_data = fetch_data_from_sql()
 if row_data:
     update_access_database(row_data)
+else:
+    print("No data was returned from the SQL query.")
