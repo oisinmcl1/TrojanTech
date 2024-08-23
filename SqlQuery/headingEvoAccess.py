@@ -9,7 +9,7 @@ def connect_SQL():
     try:
         sqlServer = pyodbc.connect(f"DSN={dsn};DATABASE={database};")
         sqlCursor = sqlServer.cursor()
-        print(f"Connection to SQL Server: {dsn} and Database: {database} was successful!")
+        # print(f"Connection to SQL Server: {dsn} and Database: {database} was successful!")
         return sqlServer, sqlCursor
     
     except pyodbc.Error as ex:
@@ -23,7 +23,7 @@ def close_SQL(sqlServer, sqlCursor):
         
         if sqlServer:
             sqlServer.close()
-        print("SQL Connection Closed.")
+        # print("SQL Connection Closed.")
     
     except pyodbc.Error as ex:
         print(f"Failed to close SQL connection: {ex}")
@@ -74,32 +74,12 @@ def clean_data(value):
     return value
 
 def fetch_SQL(sqlCursor, JobKeyID, table):
-    # Only keep columns that exist in Access database
     access_columns = [
-        'ANG_MixedGlazing', 'ANG_Weight', 'ANG_Addon', 'ANG_Packs', 'ANG_Trickle', 'ANG_CillHorn', 
-        'ANG_CustGlass', 'ANG_Decorative', 'ANG_Brilliant', 'BuildingHeight', 'BuildingLifeExpectancy', 
-        'BuildingType', 'BuildingRiskFactor', 'BuildingTerrainFactor', 'BuildingTopographyFactor', 
-        'BuildingWindLoad', 'BuildingWindSpeed', 'Cancelled', 'Coefficient', 'CustomerPaysProForma', 
-        'DateChecked', 'DateRequestedDelivery', 'Deflection', 'DeliveryAddressKeyID', 'DeliveryContact', 
-        'DeliveryEmail', 'DeliveryFaxNo', 'DeliveryMobile', 'DeliveryPhoneNo', 'DoNotContact', 
-        'DualEntryChecked', 'Email1', 'Email1Type', 'Email2', 'Email2Type', 'FabricationCentre', 
-        'FailureNotes', 'GlassOrdered', 'GroundSlope', 'HouseProcessorNotes', 'JobChecked', 
-        'JobConfirmed', 'JobFailed', 'JobKeyID', 'JobLocked', 'JobPaid', 'ManualLifeExpectancy', 
-        'ManualWindPressure', 'Mobile1Type', 'Mobile2Type', 'MobileNo1', 'MobileNo2', 'NotesAdditional1', 
-        'NotesAdditional2', 'NotesAdditional3', 'OverrideLifeExpectancy', 'OverrideWindPressure', 
-        'Phone1Type', 'Phone2Type', 'PhoneNo1', 'PhoneNo2', 'PreviouslyBought', 'PriceIncrease', 
-        'PropertyAddress1', 'PropertyAddress2', 'PropertyAddress3', 'PropertyAddress4', 
-        'PropertyCounty', 'PropertyEmail', 'PropertyFaxNo', 'PropertyMobile', 'PropertyOwnerInitials', 
-        'PropertyOwnerName', 'PropertyOwnerSalutation', 'PropertyPhoneNo', 'PropertyPostCode', 
-        'QuoteConverted', 'QuoteConvertedJobNumber', 'ReportsPrintedMaskOrders', 'ReportsPrintedMaskQuotes', 
-        'SatelliteJobAltered', 'SatelliteJobRecalculated', 'SellingPriceTypeEntered', 
-        'SellingPriceIncreaseExTax', 'SupplierGrid', 'TaxGroupID', 'TaxGroupDescription', 'TerrainType', 
-        'TradingAs', 'TownID', 'UseSecondaryGlassPrice', 'VatNo', 'WERCertificate', 'WindSpeed', 
-        'ColourSurchargeCost', 'ColourSurchargePrice', 'CurrencySurchargeAmount', 
-        'CurrencySurchargeAmountSATcost', 'CurrencySurchargeMethod', 'CurrencySurchargeValue', 
-        'CustomerCurrencySurchargeMethod', 'CustomerCurrencySurchargeValue', 'ExtrabarsCost', 
-        'ExtrabarsPrice', 'ManufacturingSiteID', 'PortalType', 'QtyFramesSub1', 'QtyFramesSub2', 
-        'QtyFramesSub3'
+        'BiFoldPurchasing_Ordered', 'BiFoldPurchasing_PONumber', 'CompDoorPurchasing_Ordered', 
+        'CompDoorPurchasing_PONumber', 'CheckType', 'GlassDelSeparate', 'GlassDelDate', 
+        'GlassPurchasing_Ordered', 'GlassPurchasing_PONumber', 'GlassRouteKeyID', 'GlassWaypoint', 
+        'JobKeyID', 'PanelPurchasing_Ordered', 'PanelPurchasing_PONumber', 'PatioPurchasing_Ordered', 
+        'PatioPurchasing_PONumber', 'DeliverySignature', 'OnlineOrderID', 'RemakeJobKeyID'
     ]
     
     try:
@@ -108,12 +88,11 @@ def fetch_SQL(sqlCursor, JobKeyID, table):
         row = sqlCursor.fetchone()
         
         if row:
-            # Apply clean_data to each value in the row
             data = {col: clean_data(val) for col, val in zip(access_columns, row)}
-            print("\nFetched Data (SQL Server):")
-            print("="*50)
-            for col, val in data.items():
-                print(f"{col:<30} : {val}")
+            # print("\nFetched Data (SQL Server):")
+            # print("="*50)
+            # for col, val in data.items():
+            #     print(f"{col:<30} : {val}")
             return data
         
         else:
@@ -136,17 +115,17 @@ def update_Access(data, satellite_job_number):
                     values = list(data.values())
                     
                     set_clause = ', '.join(f"[{col}] = ?" for col in columns)
-                    query = f"UPDATE Heading2 SET {set_clause} WHERE JobKeyID = ?"
+                    query = f"UPDATE HeadingEvoNet SET {set_clause} WHERE JobKeyID = ?"
                     
                     # Log the final query and the number of columns vs values
-                    print(f"Executing query: {query}")
-                    print(f"With values: {values + [data['JobKeyID']]}")
-                    print(f"Number of columns: {len(columns)}")
-                    print(f"Number of values: {len(values) + 1}")  # +1 for JobKeyID
+                    # print(f"Executing query: {query}")
+                    # print(f"With values: {values + [data['JobKeyID']]}")
+                    # print(f"Number of columns: {len(columns)}")
+                    # print(f"Number of values: {len(values) + 1}")  # +1 for JobKeyID
                     
                     accessCursor.execute(query, *values, data['JobKeyID'])
                     accessConn.commit()
-                    print(f"Access database updated successfully for JobKeyID {data['JobKeyID']}.")
+                    # print(f"Access database updated successfully for JobKeyID {data['JobKeyID']}.")
                 
                 else:
                     print("No data to update in Access database.")
@@ -161,10 +140,11 @@ def main(satellite_job_number):
 
     JobKeyID = fetch_JobKeyID(sqlCursor, satellite_job_number)
     if JobKeyID:
-        data = fetch_SQL(sqlCursor, JobKeyID, "dbo.Heading2")
+        data = fetch_SQL(sqlCursor, JobKeyID, "dbo.HeadingEvoNet")
         if data:
             update_Access(data, satellite_job_number)
+            print(f"Script ran successfully for job: {satellite_job_number}")
     close_SQL(sqlServer, sqlCursor)
 
 if __name__ == "__main__":
-    main('RB486')
+    pass

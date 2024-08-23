@@ -29,12 +29,12 @@ def fetch_data_from_sql(satellite_job_number):
     dsn = "Orders"
     database = "FFOrders"
     try:
-        print(f"Attempting to connect to SQL Server: DSN={dsn}, Database={database}")
+        # print(f"Attempting to connect to SQL Server: DSN={dsn}, Database={database}")
         sqlServer = pyodbc.connect(f"DSN={dsn};DATABASE={database};")
         sqlCursor = sqlServer.cursor()
 
-        print(f"Connection to SQL Server was successful!")
-        print(f"Executing SQL query...")
+        # print(f"Connection to SQL Server was successful!")
+        # print(f"Executing SQL query...")
 
         fetchQuery_Heading = f"""
         SELECT AccountNo, AcknowledgementStatus, AmountPaid, AmountPaid_Converted, Architect, Archive,
@@ -80,15 +80,15 @@ def fetch_data_from_sql(satellite_job_number):
         row = sqlCursor.fetchone()
 
         if row:
-            print("Fetched row data from SQL Server:")
-            for idx, value in enumerate(row):
-                print(f"Column {idx+1}: {value} (Type: {type(value)})")
+            # print("Fetched row data from SQL Server:")
+            # for idx, value in enumerate(row):
+            #     print(f"Column {idx+1}: {value} (Type: {type(value)})")
                 
             row = tuple(clean_data(value) for value in row)
 
-            print("\nCleaned data to be updated in Access Database:")
-            for idx, value in enumerate(row):
-                print(f"Column {idx+1}: {value} (Type: {type(value)})")
+            # print("\nCleaned data to be updated in Access Database:")
+            # for idx, value in enumerate(row):
+            #     print(f"Column {idx+1}: {value} (Type: {type(value)})")
             
             return row
         else:
@@ -102,13 +102,13 @@ def fetch_data_from_sql(satellite_job_number):
     finally:
         sqlCursor.close()
         sqlServer.close()
-        print("SQL Connection Closed.")
+        # print("SQL Connection Closed.")
 
 def update_access_database(row, job_number):
     mdb = f"C:\\temp\\attachments\\{job_number}.mdb"
 
     try:
-        print(f"Attempting to connect to Access Database: {mdb}")
+        # print(f"Attempting to connect to Access Database: {mdb}")
         connStr = (
             r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
             f"DBQ={mdb};"
@@ -116,7 +116,7 @@ def update_access_database(row, job_number):
 
         with pyodbc.connect(connStr) as accessConn:
             with accessConn.cursor() as accessCursor:
-                print(f"Connection to Access Database: {mdb} was successful!")
+                # print(f"Connection to Access Database: {mdb} was successful!")
 
                 if row:
                     # Update queries broken into chunks
@@ -208,11 +208,11 @@ def update_access_database(row, job_number):
                         params = row[start_idx:end_idx] + (job_number,)
 
                         # Debugging outputs
-                        print(f"Executing update query {idx+1}...")
-                        print(f"Query: {query}")
-                        print(f"Number of placeholders: {query.count('?')}")
-                        print(f"Params{idx+1}: {params}")
-                        print(f"Number of parameters provided: {len(params)}")
+                        # print(f"Executing update query {idx+1}...")
+                        # print(f"Query: {query}")
+                        # print(f"Number of placeholders: {query.count('?')}")
+                        # print(f"Params{idx+1}: {params}")
+                        # print(f"Number of parameters provided: {len(params)}")
 
                         assert len(params) == query.count('?'), f"Mismatch in query {idx+1} between placeholders and parameters."
 
@@ -221,7 +221,7 @@ def update_access_database(row, job_number):
 
                     # Commit all changes
                     accessConn.commit()
-                    print("All updates committed successfully.")
+                    # print("All updates committed successfully.")
 
                 else:
                     print("No data to update in Access database.")
@@ -235,12 +235,20 @@ def update_access_database(row, job_number):
             accessConn.close()
         except NameError:
             pass
-        print("Access Connection Closed.")
+        # print("Access Connection Closed.")
 
-# Run the script
-satellite_job_number = 'RB431R'  # Change this as needed
-row_data = fetch_data_from_sql(satellite_job_number)
-if row_data:
-    update_access_database(row_data, satellite_job_number)
-else:
-    print("No data was returned from the SQL query.")
+def main(satellite_job_number):
+    # This function encapsulates the main logic of the script
+    
+    # Fetch data from SQL Server
+    row_data = fetch_data_from_sql(satellite_job_number)
+    
+    if row_data:
+        # Update Access Database with the fetched data
+        update_access_database(row_data, satellite_job_number)
+        print(f"Script ran successfully for job: {satellite_job_number}")
+    else:
+        print(f"No data was returned from the SQL query for job {satellite_job_number}.")
+
+if __name__ == "__main__":
+    pass
