@@ -246,7 +246,7 @@ def main(satellite_job_number):
     if row_data:
         # Update Access Database with the fetched data
         update_access_database(row_data, satellite_job_number)
-        print(f"Script ran successfully for job: {satellite_job_number}")
+        print(f"Script ran successfully for heading job: {satellite_job_number}")
     else:
         print(f"No data was returned from the SQL query for job {satellite_job_number}.")
 

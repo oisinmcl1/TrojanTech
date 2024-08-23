@@ -143,7 +143,7 @@ def main(satellite_job_number):
         data = fetch_SQL(sqlCursor, JobKeyID, "dbo.HeadingEvoNet")
         if data:
             update_Access(data, satellite_job_number)
-            print(f"Script ran successfully for job: {satellite_job_number}")
+            print(f"Script ran successfully for headingEvo job: {satellite_job_number}")
     close_SQL(sqlServer, sqlCursor)
 
 if __name__ == "__main__":
